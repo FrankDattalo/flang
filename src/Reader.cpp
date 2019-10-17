@@ -2,7 +2,7 @@
 
 char Reader::charAt(const std::size_t index) const {
   std::size_t fullIndex = this->index + index;
-  if (fullIndex >= this->file.length()) { return -1; }
+  if (fullIndex >= this->file.length()) { return '\0'; }
   return this->file.at(fullIndex);
 }
 
