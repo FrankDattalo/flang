@@ -17,7 +17,7 @@ private:
 public:
 
   explicit Tokenizer(std::shared_ptr<Reader> reader) noexcept
-  : reader{std::move(reader)}, sourceIndex{0}, sourceLine{1}, sourceColumn{1}, 
+  : reader{std::move(reader)}, sourceIndex{0}, sourceLine{1}, sourceColumn{1},
     token{std::make_shared<Token>("", TokenType::Unknown, 0, 0, 0)}
   {}
 
@@ -25,7 +25,7 @@ public:
 
   std::shared_ptr<Token> nextToken() noexcept;
 
-  std::shared_ptr<Token> currentToken() const noexcept; 
+  std::shared_ptr<Token> currentToken() const noexcept;
 
   const std::string toString() const noexcept override;
 };

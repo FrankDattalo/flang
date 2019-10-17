@@ -4,7 +4,13 @@
 #include "Token.hpp"
 #include "Tokenizer.hpp"
 
-int main() {
+int main(int argc, char* argv[]) {
+
+  std::cout << "Arg count: " << argc << std::endl;
+  for (int i = 0; i < argc; i++) {
+    std::cout << "Arg " << i << ") " << argv[i] << std::endl;
+  }
+
   std::string data =
   R"(var a = function(hello, world) {
       if (greater(hello, world)) {

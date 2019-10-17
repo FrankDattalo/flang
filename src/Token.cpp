@@ -34,7 +34,7 @@ const char * TokenTypeToString[] = {
 
 const std::string Token::toString() const noexcept {
   return (
-    "Token(" 
+    "Token("
       "value: '" + this->value +
       "', tokenType: " + TokenTypeToString[static_cast<int>(this->tokenType)] +
       ", sourceIndex: " + std::to_string(this->sourceIndex) +

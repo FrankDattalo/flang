@@ -12,7 +12,7 @@ void Reader::advance(const std::size_t amount) {
 
 const std::string Reader::toString() const noexcept {
   return (
-    "Reader(" 
+    "Reader("
       "file: " + this->file +
       ", index: " + std::to_string(this->index) +
     ")"

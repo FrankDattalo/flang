@@ -158,7 +158,10 @@ public:
 
   virtual ~FloatTokenizerRule() = default;
 
-  std::pair<bool, std::size_t> handleFraction(const std::shared_ptr<Reader>& reader, std::size_t i) {
+  std::pair<bool, std::size_t> handleFraction(
+    const std::shared_ptr<Reader>& reader,
+    std::size_t i) {
+
     if (reader->charAt(i) != '.') {
       return std::make_pair(false, 0);
     }
