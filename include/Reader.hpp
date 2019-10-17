@@ -21,6 +21,8 @@ public:
 
   void advance(std::size_t amount);
 
+  const std::string subString(std::size_t size) const;
+
   const std::string toString() const noexcept override;
 };
 

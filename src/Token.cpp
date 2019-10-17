@@ -5,6 +5,7 @@ constexpr std::string_view TokenTypeToString[] = {
   "EndOfFile",
   "LeftCurly",
   "RightCurly",
+  "NewLine",
 };
 
 const std::string Token::toString() const noexcept {

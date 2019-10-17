@@ -18,3 +18,7 @@ const std::string Reader::toString() const noexcept {
     ")"
   );
 }
+
+const std::string Reader::subString(std::size_t size) const {
+  return this->file.substr(this->index, size);
+}

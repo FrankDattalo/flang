@@ -10,6 +10,7 @@ enum class TokenType {
   EndOfFile = 1,
   LeftCurly = 2,
   RightCurly = 3,
+  NewLine = 4,
 };
 
 class Token : public Stringable {
