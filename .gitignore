@@ -1,0 +1,6 @@
+.vscode
+build/CMake*
+build/cmake*
+build/compile_commands.json
+build/*ninja*
+build/flang

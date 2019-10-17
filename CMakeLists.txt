@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.10.2)
+project(flang)
+include_directories(include)
+file(GLOB SOURCES "src/*.cpp")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror -pipe -fexceptions -fsanitize=address -fasynchronous-unwind-tables -fstack-protector-strong")
+add_executable(flang ${SOURCES})
