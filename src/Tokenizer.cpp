@@ -288,7 +288,7 @@ std::shared_ptr<Token> Tokenizer::currentToken() const noexcept {
 
 const std::string Tokenizer::toString() const noexcept {
   return (
-    "Token("
+    "Tokenizer("
       "reader: " + this->reader->toString() +
       ", sourceIndex: " + std::to_string(this->sourceIndex) +
       ", sourceLine: " + std::to_string(this->sourceLine) +
