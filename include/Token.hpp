@@ -56,7 +56,7 @@ public:
     sourceColumn{sourceColumn}
   {}
 
-  virtual ~Token() = default;
+  ~Token() override = default;
 
   const std::string toString() const noexcept override;
 };

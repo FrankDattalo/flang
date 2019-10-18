@@ -21,7 +21,7 @@ public:
     token{std::make_shared<Token>("", TokenType::Unknown, 0, 0, 0)}
   {}
 
-  virtual ~Tokenizer() = default;
+  ~Tokenizer() override = default;
 
   std::shared_ptr<Token> nextToken() noexcept;
 

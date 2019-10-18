@@ -15,7 +15,7 @@ public:
   : file{std::move(file)}, index{0} 
   {}
 
-  virtual ~Reader() = default;
+  ~Reader() override = default;
 
   char charAt(std::size_t index) const;
 
