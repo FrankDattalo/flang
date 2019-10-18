@@ -1,6 +1,6 @@
 #include "lib.hpp"
 
-#include "Reader.hpp"
+#include "StringReader.hpp"
 #include "Token.hpp"
 #include "Tokenizer.hpp"
 
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     println(a({ x: 1 }, [ "apple", "sauce" ]));
     )";
 
-  auto reader = std::make_shared<Reader>(data);
+  auto reader = std::make_shared<StringReader>(data);
 
   auto tokenizer = std::make_shared<Tokenizer>(reader);
 

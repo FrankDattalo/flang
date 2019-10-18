@@ -46,13 +46,15 @@ public:
   const std::size_t sourceColumn;
 public:
   explicit Token(
-    std::string  value,
+    std::string value,
     TokenType   tokenType,
     std::size_t sourceIndex,
     std::size_t sourceLine,
     std::size_t sourceColumn) noexcept
-  : value{std::move(value)}, tokenType{tokenType},
-    sourceIndex{sourceIndex}, sourceLine{sourceLine},
+  : value{std::move(value)},
+    tokenType{tokenType},
+    sourceIndex{sourceIndex},
+    sourceLine{sourceLine},
     sourceColumn{sourceColumn}
   {}
 

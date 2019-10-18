@@ -1,8 +1,10 @@
 #include "Tokenizer.hpp"
 
+#include <utility>
+
 class TokenizerRule {
 public:
-  virtual std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Reader> reader) noexcept = 0;
+  virtual std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Readable> reader) noexcept = 0;
 
   virtual TokenType getType() noexcept = 0;
 };
@@ -13,13 +15,13 @@ private:
   const std::string literal;
 
 public:
-  explicit LiteralTokenizerRule(TokenType type, std::string literal) noexcept
+  explicit LiteralTokenizerRule(TokenType type, std::string  literal) noexcept
   : type{type}, literal{std::move(literal)}
   {}
 
   virtual ~LiteralTokenizerRule() = default;
 
-  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Reader> reader) noexcept override {
+  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Readable> reader) noexcept override {
     for (std::size_t i = 0; i < this->literal.length(); i++) {
       if (this->literal.at(i) != reader->charAt(i)) {
         return std::make_pair(false, 0);
@@ -59,7 +61,7 @@ public:
 
   virtual ~IdentifierTokenizerRule() = default;
 
-  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Reader> reader) noexcept override {
+  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Readable> reader) noexcept override {
     std::size_t i = 0;
 
     if (!isLiteralFirst(reader->charAt(i))) {
@@ -82,7 +84,7 @@ public:
   }
 };
 
-bool isNewLine(const std::shared_ptr<Reader>& reader, std::size_t i) {
+bool isNewLine(const std::shared_ptr<Readable>& reader, std::size_t i) {
   return
     reader->charAt(i) == '\n'
     || reader->charAt(i) == '\r'
@@ -95,7 +97,7 @@ public:
 
   virtual ~StringTokenizerRule() = default;
 
-  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Reader> reader) noexcept override {
+  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Readable> reader) noexcept override {
     std::size_t i = 0;
 
     if (reader->charAt(i) != '"') {
@@ -128,7 +130,7 @@ public:
 
   virtual ~IntegerTokenizerRule() = default;
 
-  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Reader> reader) noexcept override {
+  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Readable> reader) noexcept override {
     std::size_t i = 0;
 
     if (reader->charAt(i) == '0') {
@@ -159,7 +161,7 @@ public:
   virtual ~FloatTokenizerRule() = default;
 
   std::pair<bool, std::size_t> handleFraction(
-    const std::shared_ptr<Reader>& reader,
+    const std::shared_ptr<Readable>& reader,
     std::size_t i) {
 
     if (reader->charAt(i) != '.') {
@@ -175,7 +177,7 @@ public:
     return std::make_pair(true, i);
   }
 
-  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Reader> reader) noexcept override {
+  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Readable> reader) noexcept override {
     std::size_t i = 0;
 
     if (reader->charAt(i) == '0') {
