@@ -77,13 +77,13 @@ object declaration
   ;
 */
 
-class AstNode : public Stringable {
+class AstNode /* public Stringable */ {
 public:
   explicit AstNode() noexcept = default;
 
-  ~AstNode() noexcept override = default;
+  virtual ~AstNode() noexcept /*override*/ = default;
 
-  const std::string toString() const noexcept override = 0;
+  //const std::string toString() const noexcept override = 0;
 };
 
 class StatementAstNode;
@@ -101,7 +101,7 @@ public:
 
   ~ScriptAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 class StatementAstNode : public AstNode {
@@ -110,7 +110,25 @@ public:
 
   ~StatementAstNode() override = default;
 
-  const std::string toString() const noexcept override = 0;
+  // const std::string toString() const noexcept override = 0;
+};
+
+class DeclareStatementAstNode : public StatementAstNode {
+public:
+  const std::shared_ptr<Token> identifier;
+  const std::shared_ptr<ExpressionAstNode> expression;
+
+  explicit DeclareStatementAstNode(
+    std::shared_ptr<Token> identifier,
+    std::shared_ptr<ExpressionAstNode> expression
+  ) noexcept
+  : identifier{std::move(identifier)},
+    expression{std::move(expression)}
+  {}
+
+  ~DeclareStatementAstNode() override = default;
+
+  // const std::string toString() const noexcept override;
 };
 
 class IfStatementAstNode : public StatementAstNode {
@@ -139,7 +157,7 @@ public:
 
   ~IfStatementAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 class WhileStatementAstNode : public StatementAstNode {
@@ -157,7 +175,7 @@ public:
 
   ~WhileStatementAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 class BreakStatementAstNode : public StatementAstNode {
@@ -181,7 +199,7 @@ public:
 
   ~ReturnStatementAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 class AssignStatementAstNode : public StatementAstNode {
@@ -199,7 +217,7 @@ public:
 
   ~AssignStatementAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 class BlockStatementAstNode : public StatementAstNode {
@@ -214,14 +232,14 @@ public:
 
   ~BlockStatementAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 class ExpressionAstNode : public AstNode {
 public:
   ~ExpressionAstNode() override = default;
 
-  const std::string toString() const noexcept override = 0;
+  // const std::string toString() const noexcept override = 0;
 };
 
 class LiteralExpressionAstNode : public ExpressionAstNode {
@@ -236,7 +254,7 @@ public:
 
   ~LiteralExpressionAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 class IdentifierExpressionAstNode : public ExpressionAstNode {
@@ -251,7 +269,7 @@ public:
 
   ~IdentifierExpressionAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 class FunctionInvocationExpressionAstNode : public ExpressionAstNode {
@@ -269,28 +287,25 @@ public:
 
   ~FunctionInvocationExpressionAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 class FunctionDeclarationExpressionAstNode : public ExpressionAstNode {
 public:
-  const std::shared_ptr<Token> identifier;
-  const std::vector<std::shared_ptr<Token>> arguments;
+  const std::vector<std::shared_ptr<Token>> parameters;
   const std::shared_ptr<StatementAstNode> statement;
 
   explicit FunctionDeclarationExpressionAstNode(
-    std::shared_ptr<Token> identifier,
-    std::vector<std::shared_ptr<Token>> arguments,
+    std::vector<std::shared_ptr<Token>> parameters,
     std::shared_ptr<StatementAstNode> statement
   ) noexcept
-  : identifier{std::move(identifier)},
-    arguments{std::move(arguments)},
+  : parameters{std::move(parameters)},
     statement{std::move(statement)}
   {}
 
   ~FunctionDeclarationExpressionAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 class ObjectDeclarationExpressionAstNode : public ExpressionAstNode {
@@ -305,7 +320,7 @@ public:
 
   ~ObjectDeclarationExpressionAstNode() override = default;
 
-  const std::string toString() const noexcept override;
+  // const std::string toString() const noexcept override;
 };
 
 #endif

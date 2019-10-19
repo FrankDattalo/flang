@@ -8,5 +8,6 @@
 #include <utility>
 #include <vector>
 #include <iostream>
+#include <ostream>
 
 #endif // LIB_HPP

@@ -24,6 +24,8 @@ public:
 
   const std::string subString(std::size_t size) const override;
 
+  const std::string getLineFromIndex(std::size_t start) override;
+
   const std::string toString() const noexcept override;
 };
 

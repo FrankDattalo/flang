@@ -12,6 +12,8 @@ public:
 
   virtual void advance(std::size_t amount) = 0;
 
+  virtual const std::string getLineFromIndex(std::size_t start) = 0;
+
   virtual const std::string subString(std::size_t size) const = 0;
 
   const std::string toString() const noexcept override = 0;

@@ -205,9 +205,9 @@ public:
 const std::vector<std::shared_ptr<TokenizerRule>> rules = {
   std::make_shared<LiteralTokenizerRule>(TokenType::LeftCurly, "{"),
   std::make_shared<LiteralTokenizerRule>(TokenType::RightCurly, "}"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::NewLine, "\r\n"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::NewLine, "\r"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::NewLine, "\n"),
+  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\r\n"),
+  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\r"),
+  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\n"),
   std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\t"),
   std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, " "),
   std::make_shared<LiteralTokenizerRule>(TokenType::LeftParen, "("),
@@ -257,11 +257,12 @@ std::shared_ptr<Token> Tokenizer::nextToken() noexcept {
 
   if (match && matchSize > 0 && matchTokenType != TokenType::Unknown) {
 
-    this->token = std::make_shared<Token>(
-      this->reader->subString(matchSize), matchTokenType,
-      this->sourceIndex, this->sourceLine, this->sourceColumn);
+    std::string str = this->reader->subString(matchSize);
 
-    if (matchTokenType == TokenType::NewLine) {
+    this->token = std::make_shared<Token>(
+      str, matchTokenType, this->sourceIndex, this->sourceLine, this->sourceColumn);
+
+    if (Token::isNewLine(str)) {
       this->sourceColumn = 1;
       this->sourceLine += 1;
     } else {
@@ -300,4 +301,8 @@ const std::string Tokenizer::toString() const noexcept {
       ", sourceColumn " + std::to_string(this->sourceColumn) +
     ")"
   );
+}
+
+const std::shared_ptr<Readable> Tokenizer::getReader() const noexcept {
+  return this->reader;
 }

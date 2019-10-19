@@ -10,7 +10,6 @@ enum class TokenType {
   EndOfFile,
   LeftCurly,
   RightCurly,
-  NewLine,
   WhiteSpace,
   LeftParen,
   RightParen,
@@ -61,6 +60,12 @@ public:
   ~Token() override = default;
 
   const std::string toString() const noexcept override;
+
+  bool isNewLine() const;
+
+  static bool isNewLine(const std::string & value);
+
+  static const std::string typeToString(TokenType type) noexcept;
 };
 
 #endif

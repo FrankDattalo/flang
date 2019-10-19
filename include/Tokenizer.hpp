@@ -31,6 +31,8 @@ public:
   std::shared_ptr<Token> currentToken() const noexcept;
 
   const std::string toString() const noexcept override;
+
+  const std::shared_ptr<Readable> getReader() const noexcept;
 };
 
 #endif // TOKENIZER_HPP
