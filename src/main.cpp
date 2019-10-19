@@ -3,62 +3,55 @@
 #include "StringReader.hpp"
 #include "Token.hpp"
 #include "Tokenizer.hpp"
+#include "Parser.hpp"
 
-int main(int argc, char* argv[]) {
-
-  std::cout << "Arg count: " << argc << std::endl;
-  for (int i = 0; i < argc; i++) {
-    std::cout << "Arg " << i << ") " << argv[i] << std::endl;
-  }
-
-  std::string data =
-  R"(var a = function(hello, world) {
-      if (greater(hello, world)) {
-        for (var i = 0; less(i, 100); i = add(i, 1)) {
-          var b00 = false;
-          var xOO = undefined;
-          var z_ = true;
-          var _q = "this is a test";
-          _q = 5.4;
-          break;
-        }
-      } else {
-        return world[hello.x];
-        var n = {
-          b: 1,
-          c: function(q) {
-            return 1;
-          },
-          d: 3.5,
-          z: 0.15,
-          f: 0
-        };
-      }
-    };
-    println(a(2, 1));
-    println(a({ x: 1 }, [ "apple", "sauce" ]));
-    )";
-
-  auto reader = std::make_shared<StringReader>(data);
+void run(const std::string & str) {
+  auto reader = std::make_shared<StringReader>(str);
 
   auto tokenizer = std::make_shared<Tokenizer>(reader);
 
-  TokenType t = TokenType::EndOfFile;
+  auto parser = std::make_shared<Parser>(tokenizer, std::cout);
 
-  std::cout << "Tokens:" << std::endl;
+  std::cout << "begin parse of '" << str << "'" << std::endl;
 
-  do {
-    auto token = tokenizer->nextToken();
-    std::cout << token->toString() << std::endl;
-    t = token->tokenType;
+  auto script = parser->parseScript();
 
-    if (t == TokenType::Unknown) {
-      std::cout << "UNKNOWN TOKEN!!!!: " << token->toString() << std::endl;
-    }
+  if (script) {
+    std::cout << "parsed ok" << std::endl;
+  } else {
+    std::cout << "failed to parse" << std::endl;
+  }
+}
 
-  } while (t != TokenType::EndOfFile);
+int main(int  /*argc*/, char*  /*argv*/[]) {
 
-  std::cout << "End Tokens" << std::endl;
+  // std::cout << "Arg count: " << argc << std::endl;
+  // for (int i = 0; i < argc; i++) {
+  //   std::cout << "Arg " << i << ") " << argv[i] << std::endl;
+  // }
+
+  run(R"(var a = function(hello, world) {};)");
+  run("var a = 1;");
+  run("if (true) {} else {}");
+  run("if(true){} else {}");
+  run("if(true){}else{}");
+  run("if (true) {}else{}");
+  run("while (true) {}");
+  run("while(true){}");
+  run("break ;");
+  run("break;");
+  run("return;");
+  run("return ;");
+  run("return 1 ;");
+  run("return 2;");
+  run("var x = function(a) { return add(1, a); };");
+  run("var x = function(a) { return { b: 1, a: a }; };");
+  run("var x = function(a) { return { b: 1, a: 2 }; };");
+  run("var x = function(a) { return { b: 1 }; };");
+  run("var x = function(a) { return { }; };");
+
+
+
 
   return 0;
 }

@@ -186,6 +186,7 @@ const std::optional<std::shared_ptr<ReturnStatementAstNode>> Parser::parseReturn
   std::optional<std::shared_ptr<ExpressionAstNode>> expression{std::nullopt};
 
   if (this->tokenizer->currentToken()->tokenType != TokenType::SemiColon) {
+    foundExpression = true;
     expression = this->parseExpression();
   }
 
@@ -239,17 +240,18 @@ const std::optional<std::shared_ptr<BlockStatementAstNode>> Parser::parseBlockSt
       return std::nullopt;
     }
 
+    if (this->tokenizer->currentToken()->tokenType == TokenType::RightCurly) {
+      this->expect(TokenType::RightCurly, error, "Expected a right curly bracket to close block");
+      break;
+    }
+
     auto statement = this->parseStatement();
 
     if (!statement) {
       error = true;
+
     } else {
       statements.push_back(statement.value());
-    }
-
-    if (this->tokenizer->currentToken()->tokenType == TokenType::RightCurly) {
-      this->expect(TokenType::RightCurly, error, "Expected a right curly bracket to close block");
-      break;
     }
   }
 
@@ -288,19 +290,21 @@ const std::optional<std::shared_ptr<ExpressionAstNode>> Parser::parseExpression(
 }
 
 const std::optional<std::shared_ptr<LiteralExpressionAstNode>> Parser::parseLiteralExpression() noexcept {
+
   switch (this->tokenizer->currentToken()->tokenType)  {
     case TokenType::BooleanLiteral:
     case TokenType::StringLiteral:
     case TokenType::IntegerLiteral:
     case TokenType::FloatLiteral:
-    case TokenType::UndefinedLiteral: {
-      auto token = this->tokenizer->currentToken();
-      this->tokenizer->nextToken();
-      return std::make_shared<LiteralExpressionAstNode>(token);
-    }
+    case TokenType::UndefinedLiteral:
+      break;
     default:
       return std::nullopt;
   }
+
+  auto token = this->tokenizer->currentToken();
+  this->tokenizer->nextToken();
+  return std::make_shared<LiteralExpressionAstNode>(token);
 }
 
 const std::optional<std::shared_ptr<ExpressionAstNode>> Parser::parseIdentifierOrFunctionInvocationExpression() noexcept {
@@ -327,9 +331,6 @@ const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>> Parser
 
   this->expect(TokenType::LeftParen, error, "Expected left paren for function invocation");
 
-  bool seenAnArg = false;
-  bool seenAComma = false;
-
   while (true) {
     this->skipWhiteSpace();
 
@@ -338,7 +339,7 @@ const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>> Parser
       return std::nullopt;
     }
 
-    if (!seenAComma && this->tokenizer->currentToken()->tokenType == TokenType::RightParen) {
+    if (this->tokenizer->currentToken()->tokenType == TokenType::RightParen) {
       this->expect(TokenType::RightParen, error, "Expected a right paren to close function invocation");
       break;
     }
@@ -347,22 +348,17 @@ const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>> Parser
 
     if (!arg) {
       error = true;
+
     } else {
       arguments.push_back(arg.value());
-      seenAComma = false;
     }
 
-    if (seenAnArg) {
-      if (this->tokenizer->currentToken()->tokenType == TokenType::RightParen) {
-        this->expect(TokenType::RightParen, error, "Expected a right paren to close function invocation");
-        break;
-      }
-
-      this->expect(TokenType::Comma, error, "Expected a comma between function arguments");
-      seenAComma = true;
+    if (this->tokenizer->currentToken()->tokenType == TokenType::RightParen) {
+      this->expect(TokenType::RightParen, error, "Expected a right paren to close function invocation");
+      break;
     }
 
-    seenAnArg = true;
+    this->expect(TokenType::Comma, error, "Expected a comma between function arguments");
   }
 
   if (error) { return std::nullopt; }
@@ -380,9 +376,6 @@ const std::optional<std::shared_ptr<FunctionDeclarationExpressionAstNode>> Parse
 
   this->expect(TokenType::LeftParen, error, "Expected left paren following function definition");
 
-  bool seenAnArg = false;
-  bool seenAComma = false;
-
   while (true) {
     this->skipWhiteSpace();
 
@@ -391,7 +384,7 @@ const std::optional<std::shared_ptr<FunctionDeclarationExpressionAstNode>> Parse
       return std::nullopt;
     }
 
-    if (!seenAComma && this->tokenizer->currentToken()->tokenType == TokenType::RightParen) {
+    if (this->tokenizer->currentToken()->tokenType == TokenType::RightParen) {
       this->expect(TokenType::RightParen, error, "Expected a right paren to close parameter list of function definition");
       break;
     }
@@ -405,37 +398,53 @@ const std::optional<std::shared_ptr<FunctionDeclarationExpressionAstNode>> Parse
 
     } else {
       parameters.push_back(token);
-      seenAComma = false;
     }
 
-    if (seenAnArg) {
-      if (this->tokenizer->currentToken()->tokenType == TokenType::RightParen) {
-        this->expect(TokenType::RightParen, error, "Expected a right paren to close parameter list of function definition");
-        break;
-      }
-
-      this->expect(TokenType::Comma, error, "Expected a comma between function parameters in function definition");
-      seenAComma = true;
+    if (this->tokenizer->currentToken()->tokenType == TokenType::RightParen) {
+      this->expect(TokenType::RightParen, error, "Expected a right paren to close parameter list of function definition");
+      break;
     }
 
-    seenAnArg = true;
+    this->expect(TokenType::Comma, error, "Expected a comma between function parameters in function definition");
   }
 
-  auto statement = this->parseStatement();
+  this->skipWhiteSpace();
 
-  error = error || !statement;
+  this->expect(TokenType::LeftCurly, error, "Expected left curly bracket after to begin function body definition");
+
+  std::vector<std::shared_ptr<StatementAstNode>> statements;
+
+  while (true) {
+    this->skipWhiteSpace();
+
+    if (this->tokenizer->currentToken()->tokenType == TokenType::EndOfFile) {
+      this->expect(TokenType::RightCurly, error, "Expected a right curly bracket to end function definition");
+      return std::nullopt;
+    }
+
+    if (this->tokenizer->currentToken()->tokenType == TokenType::RightCurly) {
+      this->expect(TokenType::RightCurly, error, "Expected a right curly bracket to end function definition");
+      break;
+    }
+
+    auto statement = this->parseStatement();
+
+    if (!statement) {
+      error = true;
+
+    } else {
+      statements.push_back(statement.value());
+    }
+  }
 
   if (error) { return std::nullopt; }
 
-  return std::make_shared<FunctionDeclarationExpressionAstNode>(parameters, statement.value());
+  return std::make_shared<FunctionDeclarationExpressionAstNode>(parameters, statements);
 }
 
 const std::optional<std::shared_ptr<ObjectDeclarationExpressionAstNode>> Parser::parseObjectDeclarationExpression() noexcept {
   bool error = false;
   this->expect(TokenType::LeftCurly, error, "Expected a left curly bracket to begin object declaration");
-
-  bool seenAKeyPair = false;
-  bool seenAComma = false;
 
   std::vector<std::pair<std::shared_ptr<Token>, std::shared_ptr<ExpressionAstNode>>> keyValues;
 
@@ -447,7 +456,7 @@ const std::optional<std::shared_ptr<ObjectDeclarationExpressionAstNode>> Parser:
       return std::nullopt;
     }
 
-    if (!seenAComma && this->tokenizer->currentToken()->tokenType == TokenType::RightCurly) {
+    if (this->tokenizer->currentToken()->tokenType == TokenType::RightCurly) {
       this->expect(TokenType::RightCurly, error, "Expected a right curly bracket to end object declaration");
       break;
     }
@@ -472,17 +481,12 @@ const std::optional<std::shared_ptr<ObjectDeclarationExpressionAstNode>> Parser:
       keyValues.emplace_back(key, value.value());
     }
 
-    if (seenAKeyPair) {
-      if (this->tokenizer->currentToken()->tokenType == TokenType::RightBracket) {
-        this->expect(TokenType::RightBracket, error, "Expected a right curly bracket to end object declaration");
-        break;
-      }
-
-      this->expect(TokenType::Comma, error, "Expected a comma between function parameters in function definition");
-      seenAComma = true;
+    if (this->tokenizer->currentToken()->tokenType == TokenType::RightCurly) {
+      this->expect(TokenType::RightCurly, error, "Expected a right curly bracket to end object declaration");
+      break;
     }
 
-    seenAKeyPair = true;
+    this->expect(TokenType::Comma, error, "Expected a comma between object key-value pairs");
   }
 
   if (error) { return std::nullopt; }
@@ -491,7 +495,9 @@ const std::optional<std::shared_ptr<ObjectDeclarationExpressionAstNode>> Parser:
 }
 
 void Parser::skipWhiteSpace() noexcept {
-  while (this->tokenizer->currentToken()->tokenType != TokenType::EndOfFile && this->tokenizer->currentToken()->isNewLine()) {
+  while (
+      this->tokenizer->currentToken()->tokenType != TokenType::EndOfFile
+      && this->tokenizer->currentToken()->tokenType == TokenType::WhiteSpace) {
     this->tokenizer->nextToken();
   }
 }
@@ -513,14 +519,19 @@ std::shared_ptr<Token> Parser::expect(TokenType type, bool & error, const std::s
 
       // if this is our first error, report it
       if (!foundWrongToken) {
-        this->reportError(
-          this->tokenizer->currentToken(),
-          errorMessage
-          + ", but was type " + Token::typeToString(this->tokenizer->currentToken()->tokenType)
-          + "with value '" + this->tokenizer->currentToken()->value + "'.");
+        if (this->tokenizer->currentToken()->tokenType == TokenType::EndOfFile) {
+          this->reportError(this->tokenizer->currentToken(), errorMessage + ".");
+        } else {
+          this->reportError(this->tokenizer->currentToken(),
+            errorMessage + ", but was '" + this->tokenizer->currentToken()->value + "'.");
+        }
       }
 
       foundWrongToken = true;
+
+      if (this->tokenizer->currentToken()->tokenType == TokenType::EndOfFile) {
+        break;
+      }
 
       this->tokenizer->nextToken();
 
@@ -540,7 +551,7 @@ void Parser::reportError(const std::shared_ptr<Token>& token, const std::string 
   if (token->tokenType == TokenType::EndOfFile) {
     this->out
       << "At end of file an error was discovered:" << std::endl
-      << errorMessage << std::endl;
+      << errorMessage << std::endl << std::endl;
 
   } else {
     std::size_t startofLine = token->sourceIndex - (token->sourceColumn - 1);
@@ -548,15 +559,11 @@ void Parser::reportError(const std::shared_ptr<Token>& token, const std::string 
 
     std::string arrow;
 
-    arrow.append("^");
-
-    for (std::size_t i = 2; i < token->sourceColumn; i++) {
-      if (i == 2) {
-        arrow.append(" ");
-      } else {
-        arrow.append("~");
-      }
+    for (std::size_t i = 1; i < token->sourceColumn; i++) {
+      arrow.append("~");
     }
+
+    arrow.append("^");
 
     this->out
       << "On line " << token->sourceLine

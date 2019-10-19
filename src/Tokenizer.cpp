@@ -216,6 +216,7 @@ const std::vector<std::shared_ptr<TokenizerRule>> rules = {
   std::make_shared<LiteralTokenizerRule>(TokenType::RightBracket, "]"),
   std::make_shared<LiteralTokenizerRule>(TokenType::Function, "function"),
   std::make_shared<LiteralTokenizerRule>(TokenType::Return, "return"),
+  std::make_shared<LiteralTokenizerRule>(TokenType::Break, "break"),
   std::make_shared<LiteralTokenizerRule>(TokenType::For, "for"),
   std::make_shared<LiteralTokenizerRule>(TokenType::If, "if"),
   std::make_shared<LiteralTokenizerRule>(TokenType::Else, "else"),
@@ -238,7 +239,8 @@ const std::vector<std::shared_ptr<TokenizerRule>> rules = {
 std::shared_ptr<Token> Tokenizer::nextToken() noexcept {
 
   if (this->reader->charAt(0) == '\0') {
-    return std::make_shared<Token>("EndOfFile", TokenType::EndOfFile, 0, 0, 0);
+    this->token = std::make_shared<Token>("EndOfFile", TokenType::EndOfFile, 0, 0, 0);
+    return this->token;
   }
 
   bool match = false;

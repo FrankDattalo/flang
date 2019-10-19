@@ -1,11 +1,16 @@
 #include "Token.hpp"
 
+
+
+
+
+
 const char * TokenTypeToString[] = {
   "Unknown",
   "EndOfFile",
   "LeftCurly",
   "RightCurly",
-  "NewLine",
+  "WhiteSpace",
   "LeftParen",
   "RightParen",
   "LeftBracket",

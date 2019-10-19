@@ -18,6 +18,7 @@ statement
   | return statement
   | assign statment
   | block statement
+  | expression statement
   ;
 
 declare statement
@@ -49,6 +50,10 @@ block statement
   : '{' statement* '}'
   ;
 
+expression statement
+  : expression ';'
+  ;
+
 expression
   : INTEGER LITERAL
   | BOOLEAN LITERAL
@@ -61,8 +66,8 @@ expression
   ;
 
 function declaration
-  : 'function' '(' ')' statement
-  | 'function' '(' IDENTIFIER ( ',' IDENTIFIER )* ')' statement
+  : 'function' '(' ')' '{' statement* '}'
+  | 'function' '(' IDENTIFIER ( ',' IDENTIFIER )* ')' '{' statement '}'
   ;
 
 function invocation
@@ -293,14 +298,14 @@ public:
 class FunctionDeclarationExpressionAstNode : public ExpressionAstNode {
 public:
   const std::vector<std::shared_ptr<Token>> parameters;
-  const std::shared_ptr<StatementAstNode> statement;
+  const std::vector<std::shared_ptr<StatementAstNode>> statements;
 
   explicit FunctionDeclarationExpressionAstNode(
     std::vector<std::shared_ptr<Token>> parameters,
-    std::shared_ptr<StatementAstNode> statement
+    std::vector<std::shared_ptr<StatementAstNode>> statements
   ) noexcept
   : parameters{std::move(parameters)},
-    statement{std::move(statement)}
+    statements{std::move(statements)}
   {}
 
   ~FunctionDeclarationExpressionAstNode() override = default;
