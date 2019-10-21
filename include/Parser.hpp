@@ -22,46 +22,67 @@ public:
 
   ~Parser() noexcept override = default;
 
-  const std::optional<std::shared_ptr<ScriptAstNode>> parseScript() noexcept;
+  const std::optional<std::shared_ptr<ScriptAstNode>>
+  parseScript() noexcept;
 
-  const std::optional<std::shared_ptr<StatementAstNode>> parseStatement() noexcept;
+  const std::optional<std::shared_ptr<StatementAstNode>>
+  parseStatement() noexcept;
 
-  const std::optional<std::shared_ptr<IfStatementAstNode>> parseIfStatement() noexcept;
+  const std::optional<std::shared_ptr<IfStatementAstNode>>
+  parseIfStatement() noexcept;
 
-  const std::optional<std::shared_ptr<DeclareStatementAstNode>> parseDeclareStatement() noexcept;
+  const std::optional<std::shared_ptr<DeclareStatementAstNode>>
+  parseDeclareStatement() noexcept;
 
-  const std::optional<std::shared_ptr<WhileStatementAstNode>> parseWhileStatement() noexcept;
+  const std::optional<std::shared_ptr<WhileStatementAstNode>>
+  parseWhileStatement() noexcept;
 
-  const std::optional<std::shared_ptr<BreakStatementAstNode>> parseBreakStatement() noexcept;
+  const std::optional<std::shared_ptr<BreakStatementAstNode>>
+  parseBreakStatement() noexcept;
 
-  const std::optional<std::shared_ptr<ReturnStatementAstNode>> parseReturnStatement() noexcept;
+  const std::optional<std::shared_ptr<ReturnStatementAstNode>>
+  parseReturnStatement() noexcept;
 
-  const std::optional<std::shared_ptr<AssignStatementAstNode>> parseAssignStatement() noexcept;
+  const std::optional<std::shared_ptr<AssignStatementAstNode>>
+  parseAssignStatement() noexcept;
 
-  const std::optional<std::shared_ptr<BlockStatementAstNode>> parseBlockStatement() noexcept;
+  const std::optional<std::shared_ptr<BlockStatementAstNode>>
+  parseBlockStatement() noexcept;
 
-  const std::optional<std::shared_ptr<ExpressionAstNode>> parseExpression() noexcept;
+  const std::optional<std::shared_ptr<ExpressionAstNode>>
+  parseExpression() noexcept;
 
-  const std::optional<std::shared_ptr<LiteralExpressionAstNode>> parseLiteralExpression() noexcept;
+  const std::optional<std::shared_ptr<LiteralExpressionAstNode>>
+  parseLiteralExpression() noexcept;
 
-  const std::optional<std::shared_ptr<IdentifierExpressionAstNode>> parseIdentiferExpression() noexcept;
+  const std::optional<std::shared_ptr<IdentifierExpressionAstNode>>
+  parseIdentiferExpression() noexcept;
 
-  const std::optional<std::shared_ptr<FunctionDeclarationExpressionAstNode>> parseFunctionDeclarationExpression() noexcept;
+  const std::optional<std::shared_ptr<FunctionDeclarationExpressionAstNode>>
+  parseFunctionDeclarationExpression() noexcept;
 
-  const std::optional<std::shared_ptr<ObjectDeclarationExpressionAstNode>> parseObjectDeclarationExpression() noexcept;
+  const std::optional<std::shared_ptr<ObjectDeclarationExpressionAstNode>>
+  parseObjectDeclarationExpression() noexcept;
 
-  const std::optional<std::shared_ptr<ExpressionAstNode>> parseIdentifierOrFunctionInvocationExpression() noexcept;
+  const std::optional<std::shared_ptr<ExpressionAstNode>>
+  parseIdentifierOrFunctionInvocationExpression() noexcept;
 
-  const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>> parseFunctionInvocationExpression() noexcept;
+  const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>>
+  parseFunctionInvocationExpression() noexcept;
 
   const std::string toString() const noexcept override;
 
 private:
-  void reportError(const std::shared_ptr<Token>& token, const std::string & errorMessage) noexcept;
+  void reportError(
+    const std::shared_ptr<Token>& token,
+    const std::string & errorMessage) noexcept;
 
   void skipWhiteSpace() noexcept;
 
-  std::shared_ptr<Token> expect(TokenType type, bool & error, const std::string & errorMessage) noexcept;
+  std::shared_ptr<Token> expect(
+    TokenType type,
+    bool & error,
+    const std::string & errorMessage) noexcept;
 };
 
 #endif
