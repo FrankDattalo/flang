@@ -4,19 +4,19 @@
 #include "lib.hpp"
 #include "Stringable.hpp"
 #include "Ast.hpp"
-#include "Tokenizer.hpp"
+#include "TokenBuffer.hpp"
 
 class Parser : public Stringable {
 private:
-  const std::shared_ptr<Tokenizer> tokenizer;
+  const std::shared_ptr<TokenBuffer> tokenBuffer;
   std::ostream & out;
 
 public:
   explicit Parser(
-    std::shared_ptr<Tokenizer> tokenizer,
+    std::shared_ptr<TokenBuffer> tokenBuffer,
     std::ostream & out
   ) noexcept
-  : tokenizer{std::move(tokenizer)},
+  : tokenBuffer{std::move(tokenBuffer)},
     out{out}
   {}
 
@@ -44,11 +44,15 @@ public:
 
   const std::optional<std::shared_ptr<LiteralExpressionAstNode>> parseLiteralExpression() noexcept;
 
+  const std::optional<std::shared_ptr<IdentifierExpressionAstNode>> parseIdentiferExpression() noexcept;
+
   const std::optional<std::shared_ptr<FunctionDeclarationExpressionAstNode>> parseFunctionDeclarationExpression() noexcept;
 
   const std::optional<std::shared_ptr<ObjectDeclarationExpressionAstNode>> parseObjectDeclarationExpression() noexcept;
 
   const std::optional<std::shared_ptr<ExpressionAstNode>> parseIdentifierOrFunctionInvocationExpression() noexcept;
+
+  const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>> parseFunctionInvocationExpression() noexcept;
 
   const std::string toString() const noexcept override;
 
@@ -58,9 +62,6 @@ private:
   void skipWhiteSpace() noexcept;
 
   std::shared_ptr<Token> expect(TokenType type, bool & error, const std::string & errorMessage) noexcept;
-
-  // private because it is expecting a value passed from parseIdentifierOrFunctionInvocationExpression
-  const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>> parseFunctionInvocationExpression(const std::shared_ptr<Token>& identifer) noexcept;
 };
 
 #endif

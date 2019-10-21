@@ -18,7 +18,7 @@ statement
   | return statement
   | assign statment
   | block statement
-  | expression statement
+  | expression statement <- not yet implemented
   ;
 
 declare statement

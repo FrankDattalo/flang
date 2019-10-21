@@ -3,14 +3,14 @@
 #include "StringReader.hpp"
 #include "Token.hpp"
 #include "Tokenizer.hpp"
+#include "TokenBuffer.hpp"
 #include "Parser.hpp"
 
 void run(const std::string & str) {
   auto reader = std::make_shared<StringReader>(str);
-
   auto tokenizer = std::make_shared<Tokenizer>(reader);
-
-  auto parser = std::make_shared<Parser>(tokenizer, std::cout);
+  auto tokenBuffer = std::make_shared<TokenBuffer>(tokenizer);
+  auto parser = std::make_shared<Parser>(tokenBuffer, std::cout);
 
   std::cout << "begin parse of '" << str << "'" << std::endl;
 
@@ -30,7 +30,7 @@ int main(int  /*argc*/, char*  /*argv*/[]) {
   //   std::cout << "Arg " << i << ") " << argv[i] << std::endl;
   // }
 
-  run(R"(var a = function(hello, world) {};)");
+  run("var a = function(hello, world) {};");
   run("var a = 1;");
   run("if (true) {} else {}");
   run("if(true){} else {}");
@@ -49,7 +49,27 @@ int main(int  /*argc*/, char*  /*argv*/[]) {
   run("var x = function(a) { return { b: 1, a: 2 }; };");
   run("var x = function(a) { return { b: 1 }; };");
   run("var x = function(a) { return { }; };");
+  run(
+    R"(
+      var x = function(a) {
+        var c = 0;
 
+        var b = function(z) {
+          c = add(z, c);
+        };
+
+        return b;
+      };
+
+      var q = { x: x };
+
+      var x = get(q, "x");
+
+      var b = x(1);
+
+      var _ = println(b);
+    )"
+  );
 
 
 
