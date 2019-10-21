@@ -5,6 +5,7 @@
 #include "Stringable.hpp"
 #include "Ast.hpp"
 #include "TokenBuffer.hpp"
+#include "Error.hpp"
 
 class Parser : public Stringable {
 private:
@@ -74,7 +75,7 @@ public:
 
 private:
   void reportError(
-    const std::shared_ptr<Token>& token,
+    const std::shared_ptr<Token> token,
     const std::string & errorMessage) noexcept;
 
   void skipWhiteSpace() noexcept;

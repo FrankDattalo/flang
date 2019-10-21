@@ -597,33 +597,12 @@ Parser::expect(TokenType type, bool & error, const std::string & errorMessage) n
 }
 
 void Parser::reportError(
-    const std::shared_ptr<Token>& token,
+    const std::shared_ptr<Token> token,
     const std::string & errorMessage) noexcept {
 
-  if (token->tokenType == TokenType::EndOfFile) {
-    this->out
-      << "At end of file an error was discovered:" << std::endl
-      << errorMessage << std::endl << std::endl;
-
-  } else {
-    std::size_t startofLine = token->sourceIndex - (token->sourceColumn - 1);
-    auto line = this->tokenBuffer->getTokenizer()->getReader()->getLineFromIndex(startofLine);
-
-    std::string arrow;
-
-    for (std::size_t i = 1; i < token->sourceColumn; i++) {
-      arrow.append("~");
-    }
-
-    arrow.append("^");
-
-    this->out
-      << "On line " << token->sourceLine
-      << " at column " << token->sourceColumn
-      << " within source index at " << token->sourceIndex
-      << " an error was discovered:" << std::endl
-      << errorMessage << std::endl
-      << line << std::endl
-      << arrow << std::endl << std::endl;
-  }
+  ErrorUtils::reportErrorAtToken(
+    this->out,
+    "syntactic analysis",
+    this->tokenBuffer->getTokenizer()->getReader(),
+    token, errorMessage);
 }

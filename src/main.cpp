@@ -70,6 +70,12 @@ int main(int  /*argc*/, char*  /*argv*/[]) {
       var _ = println(b);
     )"
   );
+  run(
+    R"(
+      var x = a (1);
+      var y = z                 (1);
+    )"
+  );
 
 
 
