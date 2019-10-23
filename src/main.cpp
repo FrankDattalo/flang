@@ -5,6 +5,7 @@
 #include "Tokenizer.hpp"
 #include "TokenBuffer.hpp"
 #include "Parser.hpp"
+#include "SemanticAnalyzer.hpp"
 
 void run(const std::string & str) {
   auto reader = std::make_shared<StringReader>(str);
@@ -20,6 +21,15 @@ void run(const std::string & str) {
     std::cout << "parsed ok" << std::endl;
   } else {
     std::cout << "failed to parse" << std::endl;
+    return;
+  }
+
+  auto analyzer = std::make_shared<SemanticAnalyzer>(std::cout, reader);
+
+  if (!analyzer->isValid(script.value())) {
+    std::cout << "semantic analysis failed" << std::endl;
+  } else {
+    std::cout << "semantic analysis ok" << std::endl;
   }
 }
 
@@ -40,6 +50,42 @@ int main(int  /*argc*/, char*  /*argv*/[]) {
   run("while(true){}");
   run("break ;");
   run("break;");
+  run("{ break; }");
+  run(
+    R"(
+      return;
+      break;
+      {
+        break;
+        return;
+        {
+          break;
+          return;
+        }
+      }
+      var x = function() {
+        break;
+        return;
+      };
+      var b = function() {
+        {
+          break;
+          {
+            {
+              {
+                break;
+                while(true) {
+                  break;
+                }
+              }
+            }
+          }
+        }
+        return;
+      };
+    )"
+  );
+
   run("return;");
   run("return ;");
   run("return 1 ;");

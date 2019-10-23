@@ -1,7 +1,5 @@
 #include "Tokenizer.hpp"
 
-#include <utility>
-
 class TokenizerRule {
 public:
   virtual std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Readable> reader) noexcept = 0;

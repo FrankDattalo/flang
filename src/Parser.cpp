@@ -172,7 +172,7 @@ const std::optional<std::shared_ptr<BreakStatementAstNode>>
 Parser::parseBreakStatement() noexcept {
   bool error = false;
 
-  this->expect(TokenType::Break, error, "Expected a break");
+  auto breakToken = this->expect(TokenType::Break, error, "Expected a break");
 
   this->skipWhiteSpace();
 
@@ -180,14 +180,14 @@ Parser::parseBreakStatement() noexcept {
 
   if (error) { return std::nullopt; }
 
-  return std::make_shared<BreakStatementAstNode>();
+  return std::make_shared<BreakStatementAstNode>(breakToken);
 }
 
 const std::optional<std::shared_ptr<ReturnStatementAstNode>>
 Parser::parseReturnStatement() noexcept {
   bool error = false;
 
-  this->expect(TokenType::Return, error, "Expected a return");
+  auto returnToken = this->expect(TokenType::Return, error, "Expected a return");
 
   this->skipWhiteSpace();
 
@@ -208,10 +208,10 @@ Parser::parseReturnStatement() noexcept {
   if (error) { return std::nullopt; }
 
   if (foundExpression) {
-    return std::make_shared<ReturnStatementAstNode>(expression.value());
+    return std::make_shared<ReturnStatementAstNode>(returnToken, expression.value());
   }
 
-  return std::make_shared<ReturnStatementAstNode>();
+  return std::make_shared<ReturnStatementAstNode>(returnToken);
 }
 
 const std::optional<std::shared_ptr<AssignStatementAstNode>>

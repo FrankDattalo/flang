@@ -185,21 +185,31 @@ public:
 
 class BreakStatementAstNode : public StatementAstNode {
 public:
+  const std::shared_ptr<Token> breakToken;
+
+  explicit BreakStatementAstNode(std::shared_ptr<Token> breakToken) noexcept
+  : breakToken{std::move(breakToken)}
+  {}
+
   ~BreakStatementAstNode() override = default;
 };
 
 class ReturnStatementAstNode : public StatementAstNode {
 public:
+  const std::shared_ptr<Token> returnToken;
   const std::optional<std::shared_ptr<ExpressionAstNode>> expression;
 
   explicit ReturnStatementAstNode(
+    std::shared_ptr<Token> returnToken,
     std::shared_ptr<ExpressionAstNode> expression
   ) noexcept
-  : expression{std::move(expression)}
+  : returnToken{std::move(returnToken)}
+  , expression{std::move(expression)}
   {}
 
-  explicit ReturnStatementAstNode() noexcept
-  : expression{std::nullopt}
+  explicit ReturnStatementAstNode(std::shared_ptr<Token> returnToken) noexcept
+  : returnToken{std::move(returnToken)}
+  , expression{std::nullopt}
   {}
 
   ~ReturnStatementAstNode() override = default;
