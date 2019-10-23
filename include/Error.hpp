@@ -10,8 +10,8 @@ namespace ErrorUtils {
   void reportErrorAtToken(
     std::ostream & out,
     const std::string & phase,
-    std::shared_ptr<Readable> reader,
-    std::shared_ptr<Token> token,
+    const std::shared_ptr<Readable>& reader,
+    const std::shared_ptr<Token>& token,
     const std::string & message);
 
 }

@@ -84,7 +84,7 @@ public:
   }
 };
 
-bool isNewLine(const std::shared_ptr<Readable> reader, std::size_t i) {
+bool isNewLine(const std::shared_ptr<Readable>& reader, std::size_t i) {
   return
     reader->charAt(i) == '\n'
     || reader->charAt(i) == '\r'
@@ -161,7 +161,7 @@ public:
   virtual ~FloatTokenizerRule() = default;
 
   std::pair<bool, std::size_t> handleFraction(
-    const std::shared_ptr<Readable> reader,
+    const std::shared_ptr<Readable>& reader,
     std::size_t i) {
 
     if (reader->charAt(i) != '.') {

@@ -3,8 +3,8 @@
 void ErrorUtils::reportErrorAtToken(
     std::ostream & out,
     const std::string & phase,
-    const std::shared_ptr<Readable> reader,
-    const std::shared_ptr<Token> token,
+    const std::shared_ptr<Readable>& reader,
+    const std::shared_ptr<Token>& token,
     const std::string & message) {
 
   if (token->tokenType == TokenType::EndOfFile) {

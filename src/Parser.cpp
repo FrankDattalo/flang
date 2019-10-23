@@ -597,7 +597,7 @@ Parser::expect(TokenType type, bool & error, const std::string & errorMessage) n
 }
 
 void Parser::reportError(
-    const std::shared_ptr<Token> token,
+    const std::shared_ptr<Token>& token,
     const std::string & errorMessage) noexcept {
 
   ErrorUtils::reportErrorAtToken(

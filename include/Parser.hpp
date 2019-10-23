@@ -75,7 +75,7 @@ public:
 
 private:
   void reportError(
-    const std::shared_ptr<Token> token,
+    const std::shared_ptr<Token>& token,
     const std::string & errorMessage) noexcept;
 
   void skipWhiteSpace() noexcept;
