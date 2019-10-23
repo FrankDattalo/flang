@@ -1,5 +1,51 @@
 #include "SemanticAnalyzer.hpp"
 
+class Scope {
+private:
+  const std::optional<std::shared_ptr<Scope>> outerScope;
+  std::map<std::string, std::shared_ptr<Token>> localScope;
+
+  explicit Scope() noexcept
+  : outerScope{std::nullopt}
+  {}
+
+  explicit Scope(std::shared_ptr<Scope> outerScope) noexcept
+  : outerScope{outerScope}
+  {}
+
+  ~Scope() = default;
+
+  bool hasOuterScope() const {
+    return this->outerScope.has_value();
+  }
+
+  void define(const std::string & variableName, std::shared_ptr<Token> token) {
+    localScope.insert(std::make_pair(variableName, token));
+  }
+
+  bool isDefinedLocally(const std::string & variableName) {
+    return this->localScope.find(variableName) != this->localScope.end();
+  }
+
+  bool isDefined(const std::string & variableName) {
+
+    Scope* scopeToSearch = this;
+
+    while (true) {
+
+      if (scopeToSearch->isDefinedLocally(variableName)) {
+        return true;
+      }
+
+      if (scopeToSearch->outerScope) {
+        scopeToSearch = outerScope.value().get();
+
+      } else {
+        return false;
+      }
+    }
+  }
+};
 
 bool SemanticAnalyzer::isValid(const std::shared_ptr<ScriptAstNode>& script) noexcept {
   bool result = true;

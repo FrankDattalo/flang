@@ -10,5 +10,6 @@
 #include <iostream>
 #include <ostream>
 #include <list>
+#include <map>
 
 #endif // LIB_HPP
