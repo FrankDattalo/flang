@@ -69,6 +69,34 @@ bool SemanticAnalyzer::isValid(const std::shared_ptr<ScriptAstNode>& script) noe
   return result;
 }
 
+bool allVariablesDefinedBeforeUse(
+    const std::vector<std::shared_ptr<StatementAstNode>>& statements,
+    const std::shared_ptr<Scope> scope) {
+
+  // when we encouter a block, define a new scope, link the outer scope, and descend there
+  // after descending, pop the scope and continue looping
+
+  // when we encouter an assign or a declare which are a function definition, link the outer scope,
+  // add the parameters as defined variables within the new scope, and descend there
+  // after descending, pop the scope and continue looping
+
+  // when we encounter an if statement, check the if condition, link the outer scope, and descend there
+  // after descending pop the scope, if the if statement has an else, descend there
+
+  // when we encounter a while statement, check the condition, link the outer scope and descend there
+
+  // when we encounter a return statement, if the condition is present, descend there
+
+  // when we encoutner an assign or declare of an object literal, for each value, link the outer scope
+  // add the parameters as defined variables in the new scope, and descend there,
+  // after descending pop the scope and conitinue looping
+
+  // when we encounter an assign or declare of a function call or identifier, validate that the
+  // identifier or function identifier is defined.
+
+  return true;
+}
+
 bool SemanticAnalyzer::allVariablesDefinedBeforeUse(const std::shared_ptr<ScriptAstNode>&  /*script*/) noexcept {
   return true;
 }
@@ -111,6 +139,8 @@ bool SemanticAnalyzer::returnsOnlyInFunctions(const std::shared_ptr<ScriptAstNod
 }
 
 bool SemanticAnalyzer::breaksOnlyInLoops(const std::shared_ptr<ScriptAstNode>& script) noexcept {
+
+  // TODO: update this code to also descend into functions defined in object literals
 
   std::list<std::shared_ptr<StatementAstNode>> statementsToExplore;
 
