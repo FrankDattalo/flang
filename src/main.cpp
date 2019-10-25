@@ -94,6 +94,25 @@ int main(int  /*argc*/, char*  /*argv*/[]) {
   run("var x = function(a) { return { b: 1, a: a }; };");
   run("var x = function(a) { return { b: 1, a: 2 }; };");
   run("var x = function(a) { return { b: 1 }; };");
+  run(
+    R"(
+      var x = {
+        y: function() {
+          break;
+        },
+        z: {
+          b: function() {
+            break;
+            if (true) {
+              break;
+            } else {
+              break;
+            }
+          }
+        }
+      };
+    )"
+  );
   run("var x = function(a) { return { }; };");
   run(
     R"(

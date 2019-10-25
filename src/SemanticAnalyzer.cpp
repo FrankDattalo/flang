@@ -69,9 +69,52 @@ bool SemanticAnalyzer::isValid(const std::shared_ptr<ScriptAstNode>& script) noe
   return result;
 }
 
+bool hasScope(StatementAstNode* statement) {
+
+  const auto ifPtr = dynamic_cast<IfStatementAstNode*>(statement);
+  const auto whilePtr = dynamic_cast<WhileStatementAstNode*>(statement);
+  const auto declarePtr = dynamic_cast<DeclareStatementAstNode*>(statement);
+  const auto assignPtr = dynamic_cast<AssignStatementAstNode*>(statement);
+
+  if (ifPtr != nullptr) {
+    return true;
+  }
+
+  if (whilePtr != nullptr) {
+    return true;
+  }
+
+  ExpressionAstNode* expression = nullptr;
+
+  if (assignPtr != nullptr) {
+    expression = assignPtr->expression.get();
+  }
+
+  if (declarePtr != nullptr) {
+    expression = declarePtr->expression.get();
+  }
+
+  if (expression == nullptr) {
+    return false;
+  }
+
+  const auto fn = dynamic_cast<FunctionDeclarationExpressionAstNode*>(expression);
+  const auto obj = dynamic_cast<ObjectDeclarationExpressionAstNode*>(expression);
+
+  if (fn != nullptr) {
+    return true;
+  }
+
+  if (obj != nullptr) {
+    return true;
+  }
+
+  return false;
+}
+
 bool allVariablesDefinedBeforeUse(
-    const std::vector<std::shared_ptr<StatementAstNode>>& statements,
-    const std::shared_ptr<Scope> scope) {
+    const std::vector<std::shared_ptr<StatementAstNode>>&  /*statements*/,
+    const std::shared_ptr<Scope>&  /*scope*/) {
 
   // when we encouter a block, define a new scope, link the outer scope, and descend there
   // after descending, pop the scope and continue looping
@@ -138,9 +181,54 @@ bool SemanticAnalyzer::returnsOnlyInFunctions(const std::shared_ptr<ScriptAstNod
   return noError;
 }
 
-bool SemanticAnalyzer::breaksOnlyInLoops(const std::shared_ptr<ScriptAstNode>& script) noexcept {
+void exploreExpressionNonLoops(
+    std::list<std::shared_ptr<StatementAstNode>>& statementsToExplore,
+    ExpressionAstNode* expressionPointer) noexcept {
 
-  // TODO: update this code to also descend into functions defined in object literals
+  const auto fn = dynamic_cast<FunctionDeclarationExpressionAstNode*>(expressionPointer);
+  const auto obj = dynamic_cast<ObjectDeclarationExpressionAstNode*>(expressionPointer);
+
+  if (fn != nullptr) {
+    for (auto const& statement : fn->statements) {
+      statementsToExplore.push_back(statement);
+    }
+  } else if (obj != nullptr) {
+    for (auto const& kv : obj->keyValues) {
+      auto const value = kv.second.get();
+      exploreExpressionNonLoops(statementsToExplore, value);
+    }
+  }
+}
+
+void exploreStatementsNonLoops(
+    std::list<std::shared_ptr<StatementAstNode>>& statementsToExplore,
+    StatementAstNode* statementPointer) noexcept {
+
+  const auto blockStatementPointer = dynamic_cast<BlockStatementAstNode*>(statementPointer);
+  const auto declareStatementPointer = dynamic_cast<DeclareStatementAstNode*>(statementPointer);
+  const auto assignStatementPointer = dynamic_cast<AssignStatementAstNode*>(statementPointer);
+  const auto ifStatementPointer = dynamic_cast<IfStatementAstNode*>(statementPointer);
+
+  if (blockStatementPointer != nullptr) {
+    for (auto const& statement : blockStatementPointer->statements) {
+      statementsToExplore.push_back(statement);
+    }
+  } else if (declareStatementPointer != nullptr) {
+    exploreExpressionNonLoops(statementsToExplore, declareStatementPointer->expression.get());
+
+  } else if (assignStatementPointer != nullptr) {
+    exploreExpressionNonLoops(statementsToExplore, assignStatementPointer->expression.get());
+
+  } else if (ifStatementPointer != nullptr) {
+    exploreStatementsNonLoops(statementsToExplore, ifStatementPointer->ifStatement.get());
+
+    if (ifStatementPointer->elseStatement) {
+      exploreStatementsNonLoops(statementsToExplore, ifStatementPointer->elseStatement.value().get());
+    }
+  }
+}
+
+bool SemanticAnalyzer::breaksOnlyInLoops(const std::shared_ptr<ScriptAstNode>& script) noexcept {
 
   std::list<std::shared_ptr<StatementAstNode>> statementsToExplore;
 
@@ -156,36 +244,17 @@ bool SemanticAnalyzer::breaksOnlyInLoops(const std::shared_ptr<ScriptAstNode>& s
     statementsToExplore.pop_front();
 
     const auto statementPointer = statement.get();
+
     // check if this is an error
     const auto breakStatementPointer = dynamic_cast<BreakStatementAstNode*>(statementPointer);
-    // things which we will search
-    const auto blockStatementPointer = dynamic_cast<BlockStatementAstNode*>(statementPointer);
-    const auto declareStatementPointer = dynamic_cast<DeclareStatementAstNode*>(statementPointer);
-    const auto assignStatementPointer = dynamic_cast<AssignStatementAstNode*>(statementPointer);
 
     if (breakStatementPointer != nullptr) {
       this->reportError(breakStatementPointer->breakToken,
         "Break statements may only be used from within loops.");
       noError = false;
 
-    } else if (blockStatementPointer != nullptr) {
-      for (auto const& statement : blockStatementPointer->statements) {
-        statementsToExplore.push_back(statement);
-      }
-    } else if (declareStatementPointer != nullptr || assignStatementPointer != nullptr) {
-      FunctionDeclarationExpressionAstNode* fn = nullptr;
-
-      if (declareStatementPointer != nullptr) {
-        fn = dynamic_cast<FunctionDeclarationExpressionAstNode*>(declareStatementPointer->expression.get());
-      } else {
-        fn = dynamic_cast<FunctionDeclarationExpressionAstNode*>(assignStatementPointer->expression.get());
-      }
-
-      if (fn != nullptr) {
-        for (auto const& statement : fn->statements) {
-          statementsToExplore.push_back(statement);
-        }
-      }
+    } else {
+      exploreStatementsNonLoops(statementsToExplore, statement.get());
     }
   }
 
