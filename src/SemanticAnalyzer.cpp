@@ -5,6 +5,7 @@ private:
   const std::optional<std::shared_ptr<Scope>> outerScope;
   std::map<std::string, std::shared_ptr<Token>> localScope;
 
+public:
   explicit Scope() noexcept
   : outerScope{std::nullopt}
   {}
@@ -261,8 +262,110 @@ bool SemanticAnalyzer::breaksOnlyInLoops(const std::shared_ptr<ScriptAstNode>& s
   return noError;
 }
 
-bool SemanticAnalyzer::allVariablesDeclaredOnlyOnceWithinScope(const std::shared_ptr<ScriptAstNode>&  /*script*/) noexcept {
+bool checkStatementScope(std::shared_ptr<Scope>& scope, StatementAstNode* statement);
+
+bool checkBlockScope(
+  std::shared_ptr<Scope>& scope, BlockStatementAstNode* statement
+) noexcept {
+
+  bool error = false;
+
+  for (const auto& statement : statement->statements) {
+    auto stmtPtr = statement.get();
+
+    if (!checkStatementScope(scope, stmtPtr)) {
+      error = true;
+    }
+  }
+
+  return error;
+}
+
+bool checkDeclareScope(
+  std::shared_ptr<Scope>&  /*scope*/, DeclareStatementAstNode*  /*statement*/
+) noexcept {
   return true;
+}
+
+bool checkAssignScope(
+  std::shared_ptr<Scope>&  /*scope*/, AssignStatementAstNode*  /*statement*/
+) noexcept {
+  return true;
+}
+
+bool checkStatementScope(
+    std::shared_ptr<Scope>& scope, StatementAstNode* statement) {
+
+  auto ifStatement = dynamic_cast<IfStatementAstNode*>(statement);
+  auto blockStatement = dynamic_cast<BlockStatementAstNode*>(statement);
+  auto whileStatement = dynamic_cast<WhileStatementAstNode*>(statement);
+  auto declareStatement = dynamic_cast<DeclareStatementAstNode*>(statement);
+  auto assignStatement = dynamic_cast<AssignStatementAstNode*>(statement);
+
+  if (declareStatement != nullptr) {
+    return checkDeclareScope(scope, declareStatement);
+
+  } if (assignStatement != nullptr) {
+    return checkAssignScope(scope, assignStatement);
+
+  } if (blockStatement != nullptr) {
+    auto innerScope = std::make_shared<Scope>(scope);
+    return checkBlockScope(innerScope, blockStatement);
+
+  } else if (whileStatement != nullptr) {
+    auto innerScope = std::make_shared<Scope>(scope);
+    return checkStatementScope(innerScope, whileStatement->statement.get());
+
+  } else if (ifStatement != nullptr) {
+    auto innerIfScope = std::make_shared<Scope>(scope);
+    bool error = false;
+
+    if (!checkStatementScope(innerIfScope, ifStatement->ifStatement.get())) {
+      error = true;
+    }
+
+    if (ifStatement->elseStatement) {
+      auto innerElseScope = std::make_shared<Scope>(scope);
+      if (!checkStatementScope(innerElseScope, ifStatement->elseStatement.value().get())) {
+        error = true;
+      }
+    }
+  }
+
+  // for (const auto& statement : statements) {
+  //   const auto statementPointer = statement.get();
+  //   const auto declareStatementPointer = dynamic_cast<DeclareStatementAstNode*>(statementPointer);
+
+  //   if (declareStatementPointer != nullptr) {
+  //     const auto identifierString = declareStatementPointer->identifier->value;
+
+  //     if (scope->isDefinedLocally(identifierString)) {
+
+
+  //     } else {
+  //       scope->define(identifierString, declareStatementPointer->identifier);
+  //     }
+  //   }
+  // }
+
+  return true;
+}
+
+bool SemanticAnalyzer::allVariablesDeclaredOnlyOnceWithinScope(const std::shared_ptr<ScriptAstNode>&  script) noexcept {
+
+  auto currentScope = std::make_shared<Scope>();
+
+  bool error = false;
+
+  for (const auto& statement : script->statements) {
+    auto stmtPtr = statement.get();
+
+    if (!checkStatementScope(currentScope, stmtPtr)) {
+      error = true;
+    }
+  }
+
+  return error;
 }
 
 void SemanticAnalyzer::reportError(
