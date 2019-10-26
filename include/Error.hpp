@@ -14,6 +14,7 @@ namespace ErrorUtils {
     const std::shared_ptr<Token>& token,
     const std::string & message);
 
+  void panic(const std::string & message);
 }
 
 #endif

@@ -141,6 +141,16 @@ int main(int  /*argc*/, char*  /*argv*/[]) {
       var y = z                 (1);
     )"
   );
+  run(
+    R"(
+      {
+        break;
+      }
+      while (true) {
+        return;
+      }
+    )"
+  );
 
 
 
