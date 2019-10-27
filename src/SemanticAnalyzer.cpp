@@ -64,9 +64,11 @@ class SemanticAnalyzerRun : public AstWalker {
 private:
   std::ostream & out;
   const std::shared_ptr<const Readable> reader;
+
+  // these are modified to check semantic corectness
   bool error;
-  // std::size_t functionDept;
-  // bool inLoop;
+  std::size_t functionDept;
+  bool inLoop;
   std::map<FunctionDeclarationExpressionAstNode*, bool> inLoopState;
   std::shared_ptr<Scope> currentScope;
 
@@ -75,8 +77,8 @@ public:
   : out{out}
   , reader{std::move(reader)}
   , error{false}
-  // , functionDept{0}
-  // , inLoop{false}
+  , functionDept{0}
+  , inLoop{false}
   , currentScope{std::make_shared<Scope>()}
   {}
 
@@ -87,23 +89,33 @@ public:
   }
 
   // validate that the variable we are delcaring has not already been declared elsewhere
-  void onEnterDeclareStatementAstNode(DeclareStatementAstNode*  /*node*/) noexcept override {
-
+  void onEnterDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept override {
+    auto originalDeclare = this->currentScope->findLocally(node->identifier->value);
+    if (originalDeclare != std::nullopt) {
+      this->reportError(node->identifier, "Duplicate identifier found within same scope.");
+    }
   }
 
   // validate that the variable we are assign has been declared within the current scope
-  void onEnterAssignStatementAstNode(AssignStatementAstNode*  /*node*/) noexcept override {
-
+  void onEnterAssignStatementAstNode(AssignStatementAstNode* node) noexcept override {
+    auto originalDeclare = this->currentScope->findLocally(node->identifier->value);
+    if (originalDeclare == std::nullopt) {
+      this->reportError(node->identifier, "No local declaration found for identifier.");
+    }
   }
 
   // validate that we're in a loop
-  void onEnterBreakStatementAstNode(BreakStatementAstNode*  /*node*/) noexcept override {
-
+  void onEnterBreakStatementAstNode(BreakStatementAstNode*  node) noexcept override {
+    if (!this->inLoop) {
+      this->reportError(node->breakToken, "Break statements can only be used from within loops.");
+    }
   }
 
   // validate that function dept is not zero
-  void onEnterReturnStatementAstNode(ReturnStatementAstNode*  /*node*/) noexcept override {
-
+  void onEnterReturnStatementAstNode(ReturnStatementAstNode*  node) noexcept override {
+    if (functionDept == 0) {
+      this->reportError(node->returnToken, "Return statements can only be used from within functions.");
+    }
   }
 
   // increase scope
@@ -113,22 +125,28 @@ public:
 
   // mark in loop to true
   void onEnterWhileStatementAstNode(WhileStatementAstNode*   /*node*/) noexcept override {
-
+    this->inLoop = true;
   }
 
   // validate that identifier is defined
-  void onEnterIdentifierExpressionAstNode(IdentifierExpressionAstNode*  /*node*/) noexcept override {
-
+  void onEnterIdentifierExpressionAstNode(IdentifierExpressionAstNode* node) noexcept override {
+    if (!this->currentScope->find(node->token->value)) {
+      this->reportError(node->token, "Undefined reference in identifier evaluation.");
+    }
   }
 
   // validate that identifier is defined
-  void onEnterFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode*  /*node*/) noexcept override {
-
+  void onEnterFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode*  node) noexcept override {
+    if (!this->currentScope->find(node->identifier->value)) {
+      this->reportError(node->identifier, "Undefined reference in function invocation.");
+    }
   }
 
   // increase scope, define arguments
-  void onEnterFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode*  /*node*/) noexcept override {
-
+  void onEnterFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode* node) noexcept override {
+    this->functionDept++;
+    this->inLoopState.insert(std::make_pair(node, this->inLoop));
+    this->inLoop = false;
   }
 
   // validate that the numeric literals can be constructed properly
@@ -154,28 +172,50 @@ public:
   }
 
   // define the variable within the current scope
-  void onExitDeclareStatementAstNode(DeclareStatementAstNode*  /*node*/) noexcept override {
+  void onExitDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept override {
+    auto find = this->currentScope->findLocally(node->identifier->value);
 
+    Error::assertWithPanic(
+      find == std::nullopt,
+      "Expected to not find local declaration for identifier.");
+
+    this->currentScope->define(node->identifier->value, node->identifier);
   }
 
   // pop scope
   void onExitBlockStatementAstNode(BlockStatementAstNode*  /*node*/) noexcept override {
+    auto outer = this->currentScope->getOuterScope();
 
+    Error::assertWithPanic(outer != std::nullopt, "No outer scope found.");
+
+    this->currentScope = outer.value();
   }
 
   // mark in loop to false
   void onExitWhileStatementAstNode(WhileStatementAstNode*   /*node*/) noexcept override {
-
+    this->inLoop = false;
   }
 
   // pop scope
-  void onExitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode*  /*node*/) noexcept override {
+  void onExitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode* node) noexcept override {
+    Error::assertWithPanic(
+      this->functionDept != 0,
+      "Expected a non zero function dept when calling onExitFunctionDeclarationExpressionAstNode");
 
+    this->functionDept--;
+
+    auto search = this->inLoopState.find(node);
+
+    Error::assertWithPanic(
+      search != this->inLoopState.end(),
+      "Could not find a key in inLoopState map for function declaration");
+
+    this->inLoop = search->second;
   }
 
   void reportError(const std::shared_ptr<Token>& token, const std::string & errorMessage) noexcept {
     this->error = true;
-    ErrorUtils::reportErrorAtToken(this->out, "semantic analysis", this->reader, token, errorMessage);
+    Error::reportErrorAtToken(this->out, "semantic analysis", this->reader, token, errorMessage);
   }
 };
 

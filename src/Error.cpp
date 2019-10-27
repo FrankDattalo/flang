@@ -1,6 +1,6 @@
 #include "Error.hpp"
 
-void ErrorUtils::reportErrorAtToken(
+void Error::reportErrorAtToken(
     std::ostream & out,
     const std::string & phase,
     const std::shared_ptr<const Readable>& reader,
@@ -35,7 +35,12 @@ void ErrorUtils::reportErrorAtToken(
   }
 }
 
-void panic(const std::string& message) {
+void Error::assertWithPanic(bool mustBeTrue, const std::string & message) {
+  if (mustBeTrue) {
+    return;
+  }
+
   std::cerr << message << std::endl;
+
   exit(1);
 }

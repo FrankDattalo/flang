@@ -600,7 +600,7 @@ void Parser::reportError(
     const std::shared_ptr<Token>& token,
     const std::string & errorMessage) noexcept {
 
-  ErrorUtils::reportErrorAtToken(
+  Error::reportErrorAtToken(
     this->out,
     "syntactic analysis",
     this->tokenBuffer->getTokenizer()->getReader(),
