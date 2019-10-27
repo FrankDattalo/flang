@@ -27,7 +27,7 @@ bool isNewLine(char c) {
   return c == '\n' || c == '\r';
 }
 
-const std::string StringReader::getLineFromIndex(std::size_t start) {
+const std::string StringReader::getLineFromIndex(std::size_t start) const {
   std::size_t end = start;
   while (end < this->file.length() && !isNewLine(this->file.at(end))) {
     end++;

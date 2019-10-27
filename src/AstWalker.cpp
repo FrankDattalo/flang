@@ -1,32 +1,85 @@
 #include "AstWalker.hpp"
 
-#define TRY_VISIT(type) do { \
-  auto casted = dynamic_cast<##type*>(node);\
-  if (casted != nullptr) {\
-    this->visit##type(casted);\
-  }\
-} while (false)
-
 // abstract nodes
 void AstWalker::visitStatementAstNode(StatementAstNode* node) noexcept {
-  TRY_VISIT(DeclareStatementAstNode);
-  TRY_VISIT(AssignStatementAstNode);
-  TRY_VISIT(IfStatementAstNode);
-  TRY_VISIT(WhileStatementAstNode);
-  TRY_VISIT(BreakStatementAstNode);
-  TRY_VISIT(ReturnStatementAstNode);
-  TRY_VISIT(BlockStatementAstNode);
+
+  auto declare = dynamic_cast<DeclareStatementAstNode*>(node);
+  if (declare != nullptr) {
+    this->visitDeclareStatementAstNode(declare);
+    return;
+  }
+
+  auto assign = dynamic_cast<AssignStatementAstNode*>(node);
+  if (assign != nullptr) {
+    this->visitAssignStatementAstNode(assign);
+    return;
+  }
+
+  auto ifStmt = dynamic_cast<IfStatementAstNode*>(node);
+  if (ifStmt != nullptr) {
+    this->visitIfStatementAstNode(ifStmt);
+    return;
+  }
+
+  auto whileStmt = dynamic_cast<WhileStatementAstNode*>(node);
+  if (whileStmt != nullptr) {
+    this->visitWhileStatementAstNode(whileStmt);
+    return;
+  }
+
+  auto breakStmt = dynamic_cast<BreakStatementAstNode*>(node);
+  if (breakStmt != nullptr) {
+    this->visitBreakStatementAstNode(breakStmt);
+    return;
+  }
+
+  auto returnStmt = dynamic_cast<ReturnStatementAstNode*>(node);
+  if (returnStmt != nullptr) {
+    this->visitReturnStatementAstNode(returnStmt);
+    return;
+  }
+
+  auto block = dynamic_cast<BlockStatementAstNode*>(node);
+  if (block != nullptr) {
+    this->visitBlockStatementAstNode(block);
+    return;
+  }
+
 }
 
 void AstWalker::visitExpressionAstNode(ExpressionAstNode* node) noexcept {
-  TRY_VISIT(LiteralExpressionAstNode);
-  TRY_VISIT(IdentifierExpressionAstNode);
-  TRY_VISIT(FunctionInvocationExpressionAstNode);
-  TRY_VISIT(FunctionDeclarationExpressionAstNode);
-  TRY_VISIT(ObjectDeclarationExpressionAstNode);
-}
 
-#undef TRY_VISIT
+  auto literal = dynamic_cast<LiteralExpressionAstNode*>(node);
+  if (literal != nullptr) {
+    this->visitLiteralExpressionAstNode(literal);
+    return;
+  }
+
+  auto identifier = dynamic_cast<IdentifierExpressionAstNode*>(node);
+  if (identifier != nullptr) {
+    this->visitIdentifierExpressionAstNode(identifier);
+    return;
+  }
+
+  auto fnCall = dynamic_cast<FunctionInvocationExpressionAstNode*>(node);
+  if (fnCall != nullptr) {
+    this->visitFunctionInvocationExpressionAstNode(fnCall);
+    return;
+  }
+
+  auto fnDefine = dynamic_cast<FunctionDeclarationExpressionAstNode*>(node);
+  if (fnDefine != nullptr) {
+    this->visitFunctionDeclarationExpressionAstNode(fnDefine);
+    return;
+  }
+
+  auto objDef = dynamic_cast<ObjectDeclarationExpressionAstNode*>(node);
+  if (objDef != nullptr) {
+    this->visitObjectDeclarationExpressionAstNode(objDef);
+    return;
+  }
+
+}
 
 // concrete walkers
 void AstWalker::visitScriptAstNode(ScriptAstNode* node) noexcept {

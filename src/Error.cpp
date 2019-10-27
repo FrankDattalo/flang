@@ -3,7 +3,7 @@
 void ErrorUtils::reportErrorAtToken(
     std::ostream & out,
     const std::string & phase,
-    const std::shared_ptr<Readable>& reader,
+    const std::shared_ptr<const Readable>& reader,
     const std::shared_ptr<Token>& token,
     const std::string & message) {
 
