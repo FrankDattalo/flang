@@ -47,7 +47,7 @@ public:
       }
 
       if (scopeToSearch->outerScope) {
-        scopeToSearch = outerScope.value().get();
+        scopeToSearch = scopeToSearch->outerScope.value().get();
 
       } else {
         return std::nullopt;
@@ -118,9 +118,25 @@ public:
     }
   }
 
+  void pushScope(const std::vector<std::shared_ptr<Token>>& itemsToDeclare) noexcept {
+    auto newScope = std::make_shared<Scope>(this->currentScope);
+    this->currentScope = newScope;
+
+    for (auto& item : itemsToDeclare) {
+      auto find = this->currentScope->findLocally(item->value);
+
+      if (find) {
+        this->reportError(item, "Duplicate identifier found within the same scope.");
+
+      } else {
+        this->currentScope->define(item->value, item);
+      }
+    }
+  }
+
   // increase scope
   void onEnterBlockStatementAstNode(BlockStatementAstNode*  /*node*/) noexcept override {
-
+    this->pushScope({});
   }
 
   // mark in loop to true
@@ -147,6 +163,7 @@ public:
     this->functionDept++;
     this->inLoopState.insert(std::make_pair(node, this->inLoop));
     this->inLoop = false;
+    this->pushScope(node->parameters);
   }
 
   // validate that the numeric literals can be constructed properly
@@ -175,15 +192,12 @@ public:
   void onExitDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept override {
     auto find = this->currentScope->findLocally(node->identifier->value);
 
-    Error::assertWithPanic(
-      find == std::nullopt,
-      "Expected to not find local declaration for identifier.");
-
-    this->currentScope->define(node->identifier->value, node->identifier);
+    if (!find) {
+      this->currentScope->define(node->identifier->value, node->identifier);
+    }
   }
 
-  // pop scope
-  void onExitBlockStatementAstNode(BlockStatementAstNode*  /*node*/) noexcept override {
+  void popScope() noexcept {
     auto outer = this->currentScope->getOuterScope();
 
     Error::assertWithPanic(outer != std::nullopt, "No outer scope found.");
@@ -191,12 +205,17 @@ public:
     this->currentScope = outer.value();
   }
 
+  // pop scope
+  void onExitBlockStatementAstNode(BlockStatementAstNode*  /*node*/) noexcept override {
+    this->popScope();
+  }
+
   // mark in loop to false
   void onExitWhileStatementAstNode(WhileStatementAstNode*   /*node*/) noexcept override {
     this->inLoop = false;
   }
 
-  // pop scope
+  // pop scope, decrease function dept, and restore loop setting
   void onExitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode* node) noexcept override {
     Error::assertWithPanic(
       this->functionDept != 0,
@@ -211,6 +230,8 @@ public:
       "Could not find a key in inLoopState map for function declaration");
 
     this->inLoop = search->second;
+
+    this->popScope();
   }
 
   void reportError(const std::shared_ptr<Token>& token, const std::string & errorMessage) noexcept {

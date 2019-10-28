@@ -40,7 +40,7 @@ void Error::assertWithPanic(bool mustBeTrue, const std::string & message) {
     return;
   }
 
-  std::cerr << message << std::endl;
+  std::cerr << "PANIC: " << message << std::endl;
 
   exit(1);
 }
