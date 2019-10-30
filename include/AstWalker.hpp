@@ -2,9 +2,9 @@
 #define AST_WALKER_HPP
 
 #include "Ast.hpp"
+#include "Error.hpp"
 
 class AstWalker {
-private:
 public:
   explicit AstWalker() noexcept = default;
 
@@ -26,6 +26,7 @@ public:
   void visitLiteralExpressionAstNode(LiteralExpressionAstNode* node) noexcept;
   void visitIdentifierExpressionAstNode(IdentifierExpressionAstNode* node) noexcept;
   void visitFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode* node) noexcept;
+  void visitBuiltInFunctionInvocationExpressionAstNode(BuiltInFunctionInvocationExpressionAstNode* node) noexcept;
   void visitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode* node) noexcept;
   void visitObjectDeclarationExpressionAstNode(ObjectDeclarationExpressionAstNode* node) noexcept;
 
@@ -41,6 +42,7 @@ public:
   virtual void onEnterLiteralExpressionAstNode(LiteralExpressionAstNode*  /*node*/) noexcept {}
   virtual void onEnterIdentifierExpressionAstNode(IdentifierExpressionAstNode*  /*node*/) noexcept {}
   virtual void onEnterFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode*  /*node*/) noexcept {}
+  virtual void onEnterBuiltInFunctionInvocationExpressionAstNode(BuiltInFunctionInvocationExpressionAstNode*  /*node*/) noexcept {}
   virtual void onEnterFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode*  /*node*/) noexcept {}
   virtual void onEnterObjectDeclarationExpressionAstNode(ObjectDeclarationExpressionAstNode*  /*node*/) noexcept {}
 
@@ -56,6 +58,7 @@ public:
   virtual void onExitLiteralExpressionAstNode(LiteralExpressionAstNode*  /*node*/) noexcept {}
   virtual void onExitIdentifierExpressionAstNode(IdentifierExpressionAstNode*  /*node*/) noexcept {}
   virtual void onExitFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode*  /*node*/) noexcept {}
+  virtual void onExitBuiltInFunctionInvocationExpressionAstNode(BuiltInFunctionInvocationExpressionAstNode*  /*node*/) noexcept {}
   virtual void onExitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode*  /*node*/) noexcept {}
   virtual void onExitObjectDeclarationExpressionAstNode(ObjectDeclarationExpressionAstNode*  /*node*/) noexcept {}
 };

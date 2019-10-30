@@ -1,11 +1,10 @@
 #include "SemanticAnalyzer.hpp"
 
 class Scope {
-private:
+public:
   const std::optional<std::shared_ptr<Scope>> outerScope;
   std::map<std::string, std::shared_ptr<Token>> localScope;
 
-public:
   explicit Scope() noexcept
   : outerScope{std::nullopt}
   {}
@@ -61,7 +60,7 @@ public:
 };
 
 class SemanticAnalyzerRun : public AstWalker {
-private:
+public:
   std::ostream & out;
   const std::shared_ptr<const Readable> reader;
 
@@ -72,7 +71,6 @@ private:
   std::map<FunctionDeclarationExpressionAstNode*, bool> inLoopState;
   std::shared_ptr<Scope> currentScope;
 
-public:
   explicit SemanticAnalyzerRun(std::ostream & out, std::shared_ptr<const Readable> reader) noexcept
   : out{out}
   , reader{std::move(reader)}
@@ -135,12 +133,12 @@ public:
   }
 
   // increase scope
-  void onEnterBlockStatementAstNode(BlockStatementAstNode*  /*node*/) noexcept override {
+  void onEnterBlockStatementAstNode(BlockStatementAstNode* /*node*/) noexcept override {
     this->pushScope({});
   }
 
   // mark in loop to true
-  void onEnterWhileStatementAstNode(WhileStatementAstNode*   /*node*/) noexcept override {
+  void onEnterWhileStatementAstNode(WhileStatementAstNode* /*node*/) noexcept override {
     this->inLoop = true;
   }
 
@@ -206,12 +204,12 @@ public:
   }
 
   // pop scope
-  void onExitBlockStatementAstNode(BlockStatementAstNode*  /*node*/) noexcept override {
+  void onExitBlockStatementAstNode(BlockStatementAstNode* /*node*/) noexcept override {
     this->popScope();
   }
 
   // mark in loop to false
-  void onExitWhileStatementAstNode(WhileStatementAstNode*   /*node*/) noexcept override {
+  void onExitWhileStatementAstNode(WhileStatementAstNode* /*node*/) noexcept override {
     this->inLoop = false;
   }
 

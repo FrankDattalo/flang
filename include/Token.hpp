@@ -1,9 +1,9 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
-#include "lib.hpp"
+#include <utility>
 
-#include "Stringable.hpp"
+#include "lib.hpp"
 
 enum class TokenType {
   Unknown,
@@ -34,18 +34,19 @@ enum class TokenType {
   StringLiteral,
   IntegerLiteral,
   FloatLiteral,
+  BuiltInFunctionName,
 };
 
-class Token : public Stringable {
+class Token {
 public:
   const std::string value;
   const TokenType   tokenType;
   const std::size_t sourceIndex;
   const std::size_t sourceLine;
   const std::size_t sourceColumn;
-public:
+
   explicit Token(
-    std::string value,
+    std::string  value,
     TokenType   tokenType,
     std::size_t sourceIndex,
     std::size_t sourceLine,
@@ -57,15 +58,9 @@ public:
     sourceColumn{sourceColumn}
   {}
 
-  ~Token() override = default;
-
-  const std::string toString() const noexcept override;
-
   bool isNewLine() const;
 
   static bool isNewLine(const std::string & value);
-
-  static const std::string typeToString(TokenType type) noexcept;
 };
 
 #endif

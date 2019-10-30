@@ -295,6 +295,10 @@ Parser::parseExpression() noexcept {
       e = this->parseLiteralExpression();
       this->skipWhiteSpace();
       return e;
+    case TokenType::BuiltInFunctionName:
+      e = this->parseBuiltInFunctionInvocationExpression();
+      this->skipWhiteSpace();
+      return e;
     default:
       e = this->parseIdentifierOrFunctionInvocationExpression();
       this->skipWhiteSpace();
@@ -348,34 +352,34 @@ Parser::parseIdentifierOrFunctionInvocationExpression() noexcept {
   return this->parseIdentiferExpression();
 }
 
-const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>>
-Parser::parseFunctionInvocationExpression() noexcept {
+template<typename T>
+const std::optional<std::shared_ptr<T>> parseFunctionInvocationLike(Parser* parser, TokenType tokenTypeToExpect) {
   bool error = false;
   std::vector<std::shared_ptr<ExpressionAstNode>> arguments;
 
-  auto identifier = this->expect(TokenType::Identifier, error,
+  auto identifier = parser->expect(tokenTypeToExpect, error,
     "Expected an identifier for function invocation");
 
-  this->skipWhiteSpace();
+  parser->skipWhiteSpace();
 
-  this->expect(TokenType::LeftParen, error, "Expected left paren for function invocation");
+  parser->expect(TokenType::LeftParen, error, "Expected left paren for function invocation");
 
   while (true) {
-    this->skipWhiteSpace();
+    parser->skipWhiteSpace();
 
-    if (this->tokenBuffer->currentToken()->tokenType == TokenType::EndOfFile) {
-      this->expect(TokenType::RightParen, error,
+    if (parser->tokenBuffer->currentToken()->tokenType == TokenType::EndOfFile) {
+      parser->expect(TokenType::RightParen, error,
         "Expected a right paren to close function invocation");
       return std::nullopt;
     }
 
-    if (this->tokenBuffer->currentToken()->tokenType == TokenType::RightParen) {
-      this->expect(TokenType::RightParen, error,
+    if (parser->tokenBuffer->currentToken()->tokenType == TokenType::RightParen) {
+      parser->expect(TokenType::RightParen, error,
         "Expected a right paren to close function invocation");
       break;
     }
 
-    auto arg = this->parseExpression();
+    auto arg = parser->parseExpression();
 
     if (!arg) {
       error = true;
@@ -384,18 +388,28 @@ Parser::parseFunctionInvocationExpression() noexcept {
       arguments.push_back(arg.value());
     }
 
-    if (this->tokenBuffer->currentToken()->tokenType == TokenType::RightParen) {
-      this->expect(TokenType::RightParen, error,
+    if (parser->tokenBuffer->currentToken()->tokenType == TokenType::RightParen) {
+      parser->expect(TokenType::RightParen, error,
         "Expected a right paren to close function invocation");
       break;
     }
 
-    this->expect(TokenType::Comma, error, "Expected a comma between function arguments");
+    parser->expect(TokenType::Comma, error, "Expected a comma between function arguments");
   }
 
   if (error) { return std::nullopt; }
 
-  return std::make_shared<FunctionInvocationExpressionAstNode>(identifier, arguments);
+  return std::make_shared<T>(identifier, arguments);
+}
+
+const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>>
+Parser::parseFunctionInvocationExpression() noexcept {
+  return parseFunctionInvocationLike<FunctionInvocationExpressionAstNode>(this, TokenType::Identifier);
+}
+
+const std::optional<std::shared_ptr<BuiltInFunctionInvocationExpressionAstNode>>
+Parser::parseBuiltInFunctionInvocationExpression() noexcept {
+  return parseFunctionInvocationLike<BuiltInFunctionInvocationExpressionAstNode>(this, TokenType::BuiltInFunctionName);
 }
 
 const std::optional<std::shared_ptr<FunctionDeclarationExpressionAstNode>>
@@ -549,14 +563,6 @@ void Parser::skipWhiteSpace() noexcept {
   }
 }
 
-const std::string Parser::toString() const noexcept {
-  return (
-    "Parser::parser("
-      "tokenizer: " + this->tokenBuffer->toString() +
-    ")"
-  );
-}
-
 std::shared_ptr<Token>
 Parser::expect(TokenType type, bool & error, const std::string & errorMessage) noexcept {
   bool foundWrongToken = false;
@@ -603,6 +609,6 @@ void Parser::reportError(
   Error::reportErrorAtToken(
     this->out,
     "syntactic analysis",
-    this->tokenBuffer->getTokenizer()->getReader(),
+    this->tokenBuffer->tokenizer->reader,
     token, errorMessage);
 }

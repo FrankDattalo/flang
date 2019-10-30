@@ -4,19 +4,15 @@
 #include "lib.hpp"
 #include "Token.hpp"
 #include "Tokenizer.hpp"
-#include "Stringable.hpp"
 
-class TokenBuffer : public Stringable {
-private:
+class TokenBuffer {
+public:
   std::list<std::shared_ptr<Token>> tokenList;
   const std::shared_ptr<Tokenizer> tokenizer;
 
-public:
   explicit TokenBuffer(std::shared_ptr<Tokenizer> tokenizer) noexcept
   : tokenizer{std::move(tokenizer)}
   {}
-
-  ~TokenBuffer() override = default;
 
   const std::shared_ptr<Token> tokenAt(std::size_t i) noexcept;
 
@@ -25,10 +21,6 @@ public:
   const std::shared_ptr<Token> nextToken() noexcept;
 
   void advance() noexcept;
-
-  const std::string toString() const noexcept override;
-
-  const std::shared_ptr<Tokenizer> getTokenizer() noexcept;
 };
 
 #endif

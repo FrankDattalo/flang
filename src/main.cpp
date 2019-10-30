@@ -132,7 +132,7 @@ int main(int  /*argc*/, char*  /*argv*/[]) {
 
       var b = x(1);
 
-      var _ = println(b);
+      var _ = print(b);
     )"
   );
   run(
@@ -154,6 +154,65 @@ int main(int  /*argc*/, char*  /*argv*/[]) {
   run(R"(
     var x = 100000000000000000000000000000000000000000000000000000000000000000000000;
     var y = 10000000000000000000000000000000000000000000000.00000000000000000000000000000000000000000000000000000000000000000000001;
+  )");
+  run(
+    R"(
+      var add = 1;
+      var get = 1;
+      var print = 1;
+
+      var x = function(a) {
+        var c = 0;
+
+        var b = function(z) {
+          var c = add(z, c);
+        };
+
+        return b;
+      };
+
+      var q = { x: x };
+
+      var y = get(q, "x");
+
+      var b = x(1);
+
+      var _ = print(b);
+    )"
+  );
+
+  run(
+    R"(
+      var _ = undefined;
+
+      var x = function(a) {
+        var c = 0;
+
+        var b = function(z) {
+          var c = add(z, c);
+        };
+
+        return b;
+      };
+
+      var q = { x: x };
+
+      var y = get(q, "x");
+
+      var b = x(1);
+
+      _ = print(b);
+    )"
+  );
+  run(R"(
+    var _ = add(
+      function() {
+        if (greater(1, 2)) {
+          var _ = print("Greater!");
+        }
+        break;
+      }
+    );
   )");
 
 

@@ -8,11 +8,10 @@
 #include "AstWalker.hpp"
 
 class SemanticAnalyzer {
-private:
+public:
   std::ostream & out;
   const std::shared_ptr<const Readable> reader;
 
-public:
   explicit SemanticAnalyzer(std::ostream & out, std::shared_ptr<const Readable> reader) noexcept
   : out{out}, reader{std::move(reader)}
   {}

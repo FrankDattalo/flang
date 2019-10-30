@@ -2,17 +2,15 @@
 #define PARSER_HPP
 
 #include "lib.hpp"
-#include "Stringable.hpp"
 #include "Ast.hpp"
 #include "TokenBuffer.hpp"
 #include "Error.hpp"
 
-class Parser : public Stringable {
-private:
+class Parser {
+public:
   const std::shared_ptr<TokenBuffer> tokenBuffer;
   std::ostream & out;
 
-public:
   explicit Parser(
     std::shared_ptr<TokenBuffer> tokenBuffer,
     std::ostream & out
@@ -20,8 +18,6 @@ public:
   : tokenBuffer{std::move(tokenBuffer)},
     out{out}
   {}
-
-  ~Parser() noexcept override = default;
 
   const std::optional<std::shared_ptr<ScriptAstNode>>
   parseScript() noexcept;
@@ -71,9 +67,9 @@ public:
   const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>>
   parseFunctionInvocationExpression() noexcept;
 
-  const std::string toString() const noexcept override;
+  const std::optional<std::shared_ptr<BuiltInFunctionInvocationExpressionAstNode>>
+  parseBuiltInFunctionInvocationExpression() noexcept;
 
-private:
   void reportError(
     const std::shared_ptr<Token>& token,
     const std::string & errorMessage) noexcept;

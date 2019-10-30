@@ -8,11 +8,10 @@ public:
 };
 
 class LiteralTokenizerRule : public TokenizerRule {
-private:
+public:
   const TokenType type;
   const std::string literal;
 
-public:
   explicit LiteralTokenizerRule(TokenType type, std::string  literal) noexcept
   : type{type}, literal{std::move(literal)}
   {}
@@ -200,6 +199,8 @@ public:
   }
 };
 
+#define builtInFn(x) std::make_shared<LiteralTokenizerRule>(TokenType::BuiltInFunctionName, x)
+
 const std::vector<std::shared_ptr<TokenizerRule>> rules = {
   std::make_shared<LiteralTokenizerRule>(TokenType::LeftCurly, "{"),
   std::make_shared<LiteralTokenizerRule>(TokenType::RightCurly, "}"),
@@ -228,11 +229,35 @@ const std::vector<std::shared_ptr<TokenizerRule>> rules = {
   std::make_shared<LiteralTokenizerRule>(TokenType::UndefinedLiteral, "undefined"),
   std::make_shared<LiteralTokenizerRule>(TokenType::Period, "."),
   std::make_shared<LiteralTokenizerRule>(TokenType::Colon, ":"),
+  builtInFn("add"),
+  builtInFn("subtract"),
+  builtInFn("multiply"),
+  builtInFn("divide"),
+  builtInFn("equal"),
+  builtInFn("notEqual"),
+  builtInFn("not"),
+  builtInFn("greater"),
+  builtInFn("less"),
+  builtInFn("greaterOrEqual"),
+  builtInFn("lessOrEqual"),
+  builtInFn("get"),
+  builtInFn("set"),
+  builtInFn("read"),
+  builtInFn("print"),
+  builtInFn("env"),
+  builtInFn("type"),
+  builtInFn("int"),
+  builtInFn("float"),
+  builtInFn("length"),
+  builtInFn("charAt"),
+  builtInFn("append"),
   std::make_shared<IdentifierTokenizerRule>(),
   std::make_shared<StringTokenizerRule>(),
   std::make_shared<FloatTokenizerRule>(),
   std::make_shared<IntegerTokenizerRule>(),
 };
+
+#undef builtInFn
 
 std::shared_ptr<Token> Tokenizer::nextToken() noexcept {
 
@@ -290,19 +315,4 @@ std::shared_ptr<Token> Tokenizer::nextToken() noexcept {
 
 std::shared_ptr<Token> Tokenizer::currentToken() const noexcept {
   return this->token;
-}
-
-const std::string Tokenizer::toString() const noexcept {
-  return (
-    "Tokenizer("
-      "reader: " + this->reader->toString() +
-      ", sourceIndex: " + std::to_string(this->sourceIndex) +
-      ", sourceLine: " + std::to_string(this->sourceLine) +
-      ", sourceColumn " + std::to_string(this->sourceColumn) +
-    ")"
-  );
-}
-
-const std::shared_ptr<Readable> Tokenizer::getReader() const noexcept {
-  return this->reader;
 }

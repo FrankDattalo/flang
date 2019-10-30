@@ -37,15 +37,3 @@ const std::shared_ptr<Token> TokenBuffer::nextToken() noexcept {
   this->advance();
   return this->tokenAt(0);
 }
-
-const std::string TokenBuffer::toString() const noexcept {
-  return (
-    "TokenBuffer("
-    "tokenizer: " + this->tokenizer->toString() +
-    ")"
-  );
-}
-
-const std::shared_ptr<Tokenizer> TokenBuffer::getTokenizer() noexcept {
-  return this->tokenizer;
-}

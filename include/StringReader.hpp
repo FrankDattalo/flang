@@ -2,16 +2,13 @@
 #define STRING_READER_HPP
 
 #include "lib.hpp"
-
 #include "Readable.hpp"
-#include "Stringable.hpp"
 
 class StringReader : public Readable {
-private:
+public:
   const std::string file;
   std::size_t index;
 
-public:
   explicit StringReader(std::string  file) noexcept
   : file{std::move(file)}, index{0}
   {}
@@ -25,8 +22,6 @@ public:
   const std::string subString(std::size_t size) const override;
 
   const std::string getLineFromIndex(std::size_t start) const override;
-
-  const std::string toString() const noexcept override;
 };
 
 #endif

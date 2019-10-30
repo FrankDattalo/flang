@@ -45,6 +45,7 @@ void AstWalker::visitStatementAstNode(StatementAstNode* node) noexcept {
     return;
   }
 
+  Error::assertWithPanic(false, "visitStatementAstNode called with unexpected node type");
 }
 
 void AstWalker::visitExpressionAstNode(ExpressionAstNode* node) noexcept {
@@ -79,6 +80,13 @@ void AstWalker::visitExpressionAstNode(ExpressionAstNode* node) noexcept {
     return;
   }
 
+  auto builtInFn = dynamic_cast<BuiltInFunctionInvocationExpressionAstNode*>(node);
+  if (builtInFn != nullptr) {
+    this->visitBuiltInFunctionInvocationExpressionAstNode(builtInFn);
+    return;
+  }
+
+  Error::assertWithPanic(false, "visitExpressionAstNode called with unexpected node type");
 }
 
 // concrete walkers
@@ -156,6 +164,14 @@ void AstWalker::visitFunctionInvocationExpressionAstNode(FunctionInvocationExpre
     this->visitExpressionAstNode(expression.get());
   }
   this->onExitFunctionInvocationExpressionAstNode(node);
+}
+
+void AstWalker::visitBuiltInFunctionInvocationExpressionAstNode(BuiltInFunctionInvocationExpressionAstNode* node) noexcept {
+  this->onEnterBuiltInFunctionInvocationExpressionAstNode(node);
+  for (auto& expression : node->expressions) {
+    this->visitExpressionAstNode(expression.get());
+  }
+  this->onExitBuiltInFunctionInvocationExpressionAstNode(node);
 }
 
 void AstWalker::visitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode* node) noexcept {

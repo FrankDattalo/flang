@@ -5,16 +5,14 @@
 
 #include "Readable.hpp"
 #include "Token.hpp"
-#include "Stringable.hpp"
 
-class Tokenizer : public Stringable {
-private:
+class Tokenizer {
+public:
   const std::shared_ptr<Readable> reader;
   std::size_t sourceIndex;
   std::size_t sourceLine;
   std::size_t sourceColumn;
   std::shared_ptr<Token> token;
-public:
 
   explicit Tokenizer(std::shared_ptr<Readable> reader) noexcept
   : reader{std::move(reader)},
@@ -24,15 +22,9 @@ public:
     token{std::make_shared<Token>("Unknown", TokenType::Unknown, 0, 0, 0)}
   {}
 
-  ~Tokenizer() override = default;
-
   std::shared_ptr<Token> nextToken() noexcept;
 
   std::shared_ptr<Token> currentToken() const noexcept;
-
-  const std::string toString() const noexcept override;
-
-  const std::shared_ptr<Readable> getReader() const noexcept;
 };
 
 #endif // TOKENIZER_HPP
