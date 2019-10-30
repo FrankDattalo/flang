@@ -3,7 +3,7 @@
 class Scope {
 public:
   const std::optional<std::shared_ptr<Scope>> outerScope;
-  std::map<std::string, std::shared_ptr<Token>> localScope;
+  std::unordered_map<std::string, std::shared_ptr<Token>> localScope;
 
   explicit Scope() noexcept
   : outerScope{std::nullopt}
@@ -68,7 +68,7 @@ public:
   bool error;
   std::size_t functionDept;
   bool inLoop;
-  std::map<FunctionDeclarationExpressionAstNode*, bool> inLoopState;
+  std::unordered_map<FunctionDeclarationExpressionAstNode*, bool> inLoopState;
   std::shared_ptr<Scope> currentScope;
 
   explicit SemanticAnalyzerRun(std::ostream & out, std::shared_ptr<const Readable> reader) noexcept
