@@ -98,23 +98,20 @@ struct Constant {
 
 struct CompiledFile {
 
-  const std::size_t localsCount;
-  const std::vector<const ByteCode> byteCode;
+  const Function entrypoint;
   const std::vector<const Function> functions;
   const std::vector<const ObjectConstructor> objects;
   const std::vector<const Constant> constants;
   const std::vector<const std::string> stringConstants;
 
   explicit CompiledFile(
-    const std::size_t localsCount,
-    const std::vector<const ByteCode> byteCode,
+    const Function entrypoint,
     const std::vector<const Function> functions,
     const std::vector<const ObjectConstructor> objects,
     const std::vector<const Constant> constants,
     const std::vector<const std::string> stringConstants
   ) noexcept
-  : localsCount{localsCount}
-  , byteCode{std::move(byteCode)}
+  : entrypoint{std::move(entrypoint)}
   , functions{std::move(functions)}
   , objects{std::move(objects)}
   , constants{std::move(constants)}
