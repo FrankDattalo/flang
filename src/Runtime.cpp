@@ -48,7 +48,7 @@ bool Variable::equals(const Variable& other) {
     case ObjectType::Object: return this->objectValue == other.objectValue;
     case ObjectType::Function: return this->closureValue->function == other.closureValue->function;
     default: {
-      Runtime::panic("Encountered unknown object type in Variable::equals");
+      Error::assertWithPanic(false, "Encountered unknown object type in Variable::equals");
       return false;
     }
   }

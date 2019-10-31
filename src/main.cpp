@@ -214,6 +214,35 @@ int main(int  /*argc*/, char*  /*argv*/[]) {
       }
     );
   )");
+  run(R"(
+    var x = 1;
+    var _ = function() {
+      var y = x();
+      y = add(x, 1);
+    };
+  )");
+  run(R"(
+    var _ = function() {
+      var x = undefined;
+      if (true) {
+        x = 1;
+      } else {
+        x = 2;
+      }
+    };
+  )");
+  run(R"(
+    var main = function(y) {
+      var x = 1;
+      var z = y(x);
+      {
+        z = add(z, 1);
+      }
+      return z;
+    };
+
+    var _ = main();
+  )");
 
 
 

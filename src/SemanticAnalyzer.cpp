@@ -4,13 +4,16 @@ class Scope {
 public:
   const std::optional<std::shared_ptr<Scope>> outerScope;
   std::unordered_map<std::string, std::shared_ptr<Token>> localScope;
+  bool outerScopeCrossesFunctionBarrier;
 
   explicit Scope() noexcept
   : outerScope{std::nullopt}
+  , outerScopeCrossesFunctionBarrier{true}
   {}
 
-  explicit Scope(std::shared_ptr<Scope> outerScope) noexcept
+  explicit Scope(bool outerScopeCrossesFunctionBarrier, std::shared_ptr<Scope> outerScope) noexcept
   : outerScope{outerScope}
+  , outerScopeCrossesFunctionBarrier{outerScopeCrossesFunctionBarrier}
   {}
 
   ~Scope() = default;
@@ -31,6 +34,27 @@ public:
     }
 
     return find->second;
+  }
+
+  std::optional<std::shared_ptr<Token>> findWithinFunction(const std::string & variableName) {
+
+    Scope* scopeToSearch = this;
+
+    while (true) {
+
+      auto find = scopeToSearch->findLocally(variableName);
+
+      if (find) {
+        return find;
+      }
+
+      if (scopeToSearch->outerScope && !scopeToSearch->outerScopeCrossesFunctionBarrier) {
+        scopeToSearch = scopeToSearch->outerScope.value().get();
+
+      } else {
+        return std::nullopt;
+      }
+    }
   }
 
   std::optional<std::shared_ptr<Token>> find(const std::string & variableName) {
@@ -96,7 +120,7 @@ public:
 
   // validate that the variable we are assign has been declared within the current scope
   void onEnterAssignStatementAstNode(AssignStatementAstNode* node) noexcept override {
-    auto originalDeclare = this->currentScope->findLocally(node->identifier->value);
+    auto originalDeclare = this->currentScope->findWithinFunction(node->identifier->value);
     if (originalDeclare == std::nullopt) {
       this->reportError(node->identifier, "No local declaration found for identifier.");
     }
@@ -116,8 +140,8 @@ public:
     }
   }
 
-  void pushScope(const std::vector<std::shared_ptr<Token>>& itemsToDeclare) noexcept {
-    auto newScope = std::make_shared<Scope>(this->currentScope);
+  void pushScope(bool newFn, const std::vector<std::shared_ptr<Token>>& itemsToDeclare) noexcept {
+    auto newScope = std::make_shared<Scope>(newFn, this->currentScope);
     this->currentScope = newScope;
 
     for (auto& item : itemsToDeclare) {
@@ -134,7 +158,7 @@ public:
 
   // increase scope
   void onEnterBlockStatementAstNode(BlockStatementAstNode* /*node*/) noexcept override {
-    this->pushScope({});
+    this->pushScope(false, {});
   }
 
   // mark in loop to true
@@ -144,14 +168,14 @@ public:
 
   // validate that identifier is defined
   void onEnterIdentifierExpressionAstNode(IdentifierExpressionAstNode* node) noexcept override {
-    if (!this->currentScope->find(node->token->value)) {
+    if (!this->currentScope->findWithinFunction(node->token->value)) {
       this->reportError(node->token, "Undefined reference in identifier evaluation.");
     }
   }
 
   // validate that identifier is defined
   void onEnterFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode*  node) noexcept override {
-    if (!this->currentScope->find(node->identifier->value)) {
+    if (!this->currentScope->findWithinFunction(node->identifier->value)) {
       this->reportError(node->identifier, "Undefined reference in function invocation.");
     }
   }
@@ -161,7 +185,7 @@ public:
     this->functionDept++;
     this->inLoopState.insert(std::make_pair(node, this->inLoop));
     this->inLoop = false;
-    this->pushScope(node->parameters);
+    this->pushScope(true, node->parameters);
   }
 
   // validate that the numeric literals can be constructed properly

@@ -2,6 +2,7 @@
 #define RUNTIME_HPP
 
 #include "lib.hpp"
+#include "Error.hpp"
 
 enum class ObjectType {
   Undefined,
@@ -67,9 +68,5 @@ struct Variable {
 struct Object {
   std::unordered_map<std::string, Variable> properties;
 };
-
-namespace Runtime {
-  void panic(const std::string & errorMessage);
-}
 
 #endif
