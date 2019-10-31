@@ -27,6 +27,7 @@ set(SOURCES
   ${PROJECT_SOURCE_DIR}/src/Token.cpp
   ${PROJECT_SOURCE_DIR}/src/TokenBuffer.cpp
   ${PROJECT_SOURCE_DIR}/src/Tokenizer.cpp
+  ${PROJECT_SOURCE_DIR}/src/Runtime.cpp
 )
 
 set(TEST_SOURCES)

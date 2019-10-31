@@ -2,53 +2,83 @@
 #define RUNTIME_HPP
 
 #include "lib.hpp"
-#include "Error.hpp"
 #include "ByteCode.hpp"
 
 namespace runtime {
 
-enum class VariableType {
-  Undefined,
-  Integer,
-  Boolean,
-  Float,
-  String,
-  Object,
-  Function,
-};
+struct StackFrame;
 
-struct Variable;
+class VirtualMachine {
+private:
+  const std::shared_ptr<const bytecode::CompiledFile> file;
+  std::shared_ptr<StackFrame> stackFrame = nullptr;
 
-struct Object {
-  const std::unordered_map<const std::string, Variable> properties;
-};
+  std::ostream & out;
+  std::istream & in;
 
-struct Function {
-  const bytecode::Function* fn;
-};
+public:
+  explicit VirtualMachine(
+    std::ostream & out,
+    std::istream & in,
+    std::shared_ptr<const bytecode::CompiledFile> file
+  ) noexcept
+  : file{std::move(file)}
+  , out{out}
+  , in{in}
+  {}
 
-struct String {
-  const bool isConstant;
-  const std::string* str;
-};
+  virtual ~VirtualMachine() = default;
 
-struct Variable {
-  VariableType type;
+  void run() noexcept;
 
-  union {
-    std::int64_t integerValue;
-    double doubleValue;
-    bool boolValue;
-    Object* objectValue;
-    Function* functionValue;
-    String* stringValue;
-  };
-};
+private:
+  void pushStackFrame(const bytecode::Function& function);
 
-struct StackFrame {
-  const std::vector<Variable> locals;
-  const bytecode::ByteCode* byteCode;
-  const std::optional<std::shared_ptr<StackFrame>> outer;
+  void popStackFrame();
+
+  void panic(const std::string & message);
+
+  Variable popOpStack();
+
+  void pushOpStack(Variable v);
+
+  void Add();
+
+  void Subtract();
+
+  void Multiply();
+
+  void Divide();
+
+  void Pop();
+
+  void Print();
+
+  void Read();
+
+  void Jump();
+
+  void JumpIfFalse();
+
+  void LoadConstant();
+
+  void LoadLocal();
+
+  void SetLocal();
+
+  void Return();
+
+  void Invoke();
+
+  bool protectDifferentTypes(Variable v1, Variable v2);
+
+  void pushUndefined();
+
+  void pushInteger(std::int64_t val);
+
+  void pushFloat(double val);
+
+  std::size_t getByteCodeParameter();
 };
 
 }
