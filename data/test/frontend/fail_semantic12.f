@@ -1,0 +1,6 @@
+{
+  break;
+}
+while (true) {
+  return;
+}
