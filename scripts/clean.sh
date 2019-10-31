@@ -1,5 +1,7 @@
 #!/bin/bash -xe
 
-if [ -f ./build/flang ]; then
-  rm ./build/flang
-fi
+for f in ./build/flang ./build/flang_frontend_tester; do
+  if [ -f $f ]; then
+    rm $f
+  fi
+done

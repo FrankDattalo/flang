@@ -10,6 +10,8 @@
 #include <array>
 #include <iostream>
 #include <ostream>
+#include <fstream>
+#include <streambuf>
 #include <list>
 #include <unordered_map>
 
