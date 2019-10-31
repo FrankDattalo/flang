@@ -3,6 +3,8 @@
 
 #include "lib.hpp"
 
+namespace bytecode {
+
 enum class ByteCodeInstruction {
   Halt,
   Add,
@@ -33,10 +35,16 @@ struct ByteCode {
 
 struct Function {
   std::size_t argumentCount;
+  std::size_t localsCount;
   const std::vector<const ByteCode> byteCode;
 
-  explicit Function(std::size_t argumentCount, const std::vector<const ByteCode> byteCode) noexcept
+  explicit Function(
+    std::size_t argumentCount,
+    std::size_t localsCount,
+    const std::vector<const ByteCode> byteCode
+  ) noexcept
   : argumentCount{argumentCount}
+  , localsCount{localsCount}
   , byteCode{std::move(byteCode)}
   {}
 };
@@ -89,6 +97,8 @@ struct Constant {
 };
 
 struct CompiledFile {
+
+  const std::size_t localsCount;
   const std::vector<const ByteCode> byteCode;
   const std::vector<const Function> functions;
   const std::vector<const ObjectConstructor> objects;
@@ -96,13 +106,15 @@ struct CompiledFile {
   const std::vector<const std::string> stringConstants;
 
   explicit CompiledFile(
+    const std::size_t localsCount,
     const std::vector<const ByteCode> byteCode,
     const std::vector<const Function> functions,
     const std::vector<const ObjectConstructor> objects,
     const std::vector<const Constant> constants,
     const std::vector<const std::string> stringConstants
   ) noexcept
-  : byteCode{std::move(byteCode)}
+  : localsCount{localsCount}
+  , byteCode{std::move(byteCode)}
   , functions{std::move(functions)}
   , objects{std::move(objects)}
   , constants{std::move(constants)}
@@ -110,5 +122,7 @@ struct CompiledFile {
   {}
 
 };
+
+}
 
 #endif

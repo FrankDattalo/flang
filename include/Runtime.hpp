@@ -3,8 +3,11 @@
 
 #include "lib.hpp"
 #include "Error.hpp"
+#include "ByteCode.hpp"
 
-enum class ObjectType {
+namespace runtime {
+
+enum class VariableType {
   Undefined,
   Integer,
   Boolean,
@@ -15,58 +18,39 @@ enum class ObjectType {
 };
 
 struct Variable;
-struct Object;
-struct Function;
-struct ByteCode;
 
-struct CompiledFile {
-  ByteCode* byteCode;
-  std::vector<Function> functions;
-  std::vector<Variable> constants;
-};
-
-struct ByteCode {
-  std::vector<std::int64_t> code;
-};
-
-struct Closure {
-  const Function* function;
+struct Object {
+  const std::unordered_map<const std::string, Variable> properties;
 };
 
 struct Function {
-  const std::size_t argCount;
-  ByteCode* byteCode;
+  const bytecode::Function* fn;
+};
+
+struct String {
+  const bool isConstant;
+  const std::string* str;
 };
 
 struct Variable {
-  ObjectType type;
+  VariableType type;
 
   union {
     std::int64_t integerValue;
     double doubleValue;
     bool boolValue;
     Object* objectValue;
-    Closure* closureValue;
-    std::string* stringValue;
+    Function* functionValue;
+    String* stringValue;
   };
-
-  static Variable createUndefined();
-
-  static Variable createBoolean(bool val);
-
-  static Variable createInteger(std::int64_t val);
-
-  static Variable createObject(Object* val);
-
-  static Variable createFloat(double val);
-
-  static Variable createString(const std::string * str);
-
-  bool equals(const Variable& other);
 };
 
-struct Object {
-  std::unordered_map<std::string, Variable> properties;
+struct StackFrame {
+  const std::vector<Variable> locals;
+  const bytecode::ByteCode* byteCode;
+  const std::optional<std::shared_ptr<StackFrame>> outer;
 };
+
+}
 
 #endif
