@@ -8,6 +8,10 @@ namespace runtime {
 
 struct StackFrame;
 
+struct Variable;
+
+struct Function;
+
 class VirtualMachine {
 private:
   const std::shared_ptr<const bytecode::CompiledFile> file;
@@ -15,6 +19,7 @@ private:
 
   std::ostream & out;
   std::istream & in;
+  bool isPanicing;
 
 public:
   explicit VirtualMachine(
@@ -25,6 +30,7 @@ public:
   : file{std::move(file)}
   , out{out}
   , in{in}
+  , isPanicing{false}
   {}
 
   virtual ~VirtualMachine() = default;
@@ -32,7 +38,7 @@ public:
   void run() noexcept;
 
 private:
-  void pushStackFrame(const bytecode::Function& function);
+  void pushStackFrame(const bytecode::Function* function);
 
   void popStackFrame();
 
@@ -78,7 +84,15 @@ private:
 
   void pushFloat(double val);
 
+  void pushBoolean(bool val);
+
   std::size_t getByteCodeParameter();
+
+  std::string variableToString(Variable var, bool panic);
+
+  std::string byteCodeToString(bytecode::ByteCode bc, bool panic);
+
+  void printFunction(const bytecode::Function* fn);
 };
 
 }

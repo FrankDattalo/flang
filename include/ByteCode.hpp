@@ -21,27 +21,31 @@ enum class ByteCodeInstruction {
   SetLocal,
   Return,
   Invoke,
+  NoOp,
 };
 
 struct ByteCode {
   const ByteCodeInstruction instruction;
   const std::size_t parameter;
 
-  explicit ByteCode(ByteCodeInstruction instruction, std::size_t parameter) noexcept
+  explicit ByteCode(
+    ByteCodeInstruction instruction,
+    std::size_t parameter
+  ) noexcept
   : instruction{instruction}
   , parameter{parameter}
   {}
 };
 
 struct Function {
-  std::size_t argumentCount;
-  std::size_t localsCount;
-  const std::vector<const ByteCode> byteCode;
+  const std::size_t argumentCount;
+  const std::size_t localsCount;
+  const std::vector<ByteCode> byteCode;
 
   explicit Function(
     std::size_t argumentCount,
     std::size_t localsCount,
-    const std::vector<const ByteCode> byteCode
+    const std::vector<ByteCode> byteCode
   ) noexcept
   : argumentCount{argumentCount}
   , localsCount{localsCount}
@@ -50,9 +54,11 @@ struct Function {
 };
 
 struct ObjectConstructor {
-  const std::vector<const std::string> keys;
+  const std::vector<std::string> keys;
 
-  explicit ObjectConstructor(const std::vector<const std::string> keys) noexcept
+  explicit ObjectConstructor(
+    const std::vector<std::string> keys
+  ) noexcept
   : keys{std::move(keys)}
   {}
 };
@@ -99,17 +105,17 @@ struct Constant {
 struct CompiledFile {
 
   const Function entrypoint;
-  const std::vector<const Function> functions;
-  const std::vector<const ObjectConstructor> objects;
-  const std::vector<const Constant> constants;
-  const std::vector<const std::string> stringConstants;
+  const std::vector<Function> functions;
+  const std::vector<ObjectConstructor> objects;
+  const std::vector<Constant> constants;
+  const std::vector<std::string> stringConstants;
 
   explicit CompiledFile(
     const Function entrypoint,
-    const std::vector<const Function> functions,
-    const std::vector<const ObjectConstructor> objects,
-    const std::vector<const Constant> constants,
-    const std::vector<const std::string> stringConstants
+    const std::vector<Function> functions,
+    const std::vector<ObjectConstructor> objects,
+    const std::vector<Constant> constants,
+    const std::vector<std::string> stringConstants
   ) noexcept
   : entrypoint{std::move(entrypoint)}
   , functions{std::move(functions)}

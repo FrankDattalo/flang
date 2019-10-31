@@ -12,11 +12,7 @@ enum class VariableType {
   Function,
 };
 
-struct Variable;
-
-struct Object {
-  std::unordered_map<std::string, Variable> properties;
-};
+struct Object;
 
 struct Function {
   bytecode::Function* fn;
@@ -40,61 +36,65 @@ struct Variable {
   };
 };
 
+struct Object {
+  std::unordered_map<std::string, Variable> properties;
+};
+
 struct StackFrame {
   std::size_t programCounter;
   std::vector<Variable> locals;
-  const std::vector<const bytecode::ByteCode>* byteCode;
+  const std::vector<bytecode::ByteCode>* byteCode;
   std::optional<std::shared_ptr<StackFrame>> outer;
   std::vector<Variable> opStack;
 };
 
-#define handleOpCode(type) case bytecode::ByteCodeInstruction::##type: { this->##type(); break; }
+void runtime::VirtualMachine::run() noexcept {
 
-void VirtualMachine::run() noexcept {
-
-  this->pushStackFrame(this->file->entrypoint);
+  this->pushStackFrame(&this->file->entrypoint);
 
   while (true) {
-    auto pg = this->stackFrame->programCounter;
-
-    if (pg >= this->stackFrame->byteCode->size()) {
+    if (this->stackFrame->programCounter >= this->stackFrame->byteCode->size()) {
       this->panic("Program counter overran bytecode!");
       return;
     }
 
-    auto instruction = this->stackFrame->byteCode->at(pg).instruction;
+    auto instruction = this->stackFrame->byteCode->at(this->stackFrame->programCounter).instruction;
 
     switch (instruction) {
-      case bytecode::ByteCodeInstruction::Halt: {
-        return;
-      }
-      handleOpCode(Add)
-      handleOpCode(Subtract)
-      handleOpCode(Multiply)
-      handleOpCode(Divide)
-      handleOpCode(Pop)
-      handleOpCode(Print)
-      handleOpCode(Read)
-      handleOpCode(Jump)
-      handleOpCode(JumpIfFalse)
-      handleOpCode(LoadConstant)
-      handleOpCode(LoadLocal)
-      handleOpCode(SetLocal)
-      handleOpCode(Return)
-      handleOpCode(Invoke)
+      case bytecode::ByteCodeInstruction::Halt: { return; }
+      case bytecode::ByteCodeInstruction::Add: { this->Add(); break; }
+      case bytecode::ByteCodeInstruction::Subtract: { this->Subtract(); break; }
+      case bytecode::ByteCodeInstruction::Multiply: { this->Multiply(); break; }
+      case bytecode::ByteCodeInstruction::Divide: { this->Divide(); break; }
+      case bytecode::ByteCodeInstruction::Pop: { this->Pop(); break; }
+      case bytecode::ByteCodeInstruction::Print: { this->Print(); break; }
+      case bytecode::ByteCodeInstruction::Read: { this->Read(); break; }
+      case bytecode::ByteCodeInstruction::Jump: { this->Jump(); break; }
+      case bytecode::ByteCodeInstruction::JumpIfFalse: { this->JumpIfFalse(); break; }
+      case bytecode::ByteCodeInstruction::LoadLocal: { this->LoadLocal(); break; }
+      case bytecode::ByteCodeInstruction::SetLocal: { this->SetLocal(); break; }
+      case bytecode::ByteCodeInstruction::LoadConstant: { this->LoadConstant(); break; }
+      case bytecode::ByteCodeInstruction::Return: { this->Return(); break; }
+      case bytecode::ByteCodeInstruction::Invoke: { this->Invoke(); break; }
+      case bytecode::ByteCodeInstruction::NoOp: { break; }
       default: {
         this->panic("Unknown bytecode found in instructions!");
         return;
       }
     }
+
+    this->stackFrame->programCounter++;
   }
 
   return;
 }
 
-#undef handleOpCode
+void ni() {
+  std::cout << "NOT IMPLEMENTED" << std::endl;
+  exit(1);
+}
 
-void VirtualMachine::popStackFrame() {
+void runtime::VirtualMachine::popStackFrame() {
   auto currentFrame = this->stackFrame;
 
   if (currentFrame == nullptr) {
@@ -114,7 +114,7 @@ void VirtualMachine::popStackFrame() {
   this->stackFrame = outerValue;
 }
 
-void VirtualMachine::pushStackFrame(const bytecode::Function& function) {
+void runtime::VirtualMachine::pushStackFrame(const bytecode::Function* function) {
   auto currentFrame = this->stackFrame;
 
   std::optional<std::shared_ptr<StackFrame>> wrappedFrame = std::nullopt;
@@ -124,10 +124,10 @@ void VirtualMachine::pushStackFrame(const bytecode::Function& function) {
   }
 
   auto newFrame = std::make_shared<StackFrame>();
-  newFrame->byteCode = &function.byteCode;
+  newFrame->byteCode = &function->byteCode;
 
-  for (std::size_t i = 0; i < function.localsCount; i++) {
-    Variable undefined;
+  for (std::size_t i = 0; i < function->localsCount; i++) {
+    Variable undefined{};
     undefined.type = VariableType::Undefined;
     newFrame->locals.push_back(undefined);
   }
@@ -138,7 +138,7 @@ void VirtualMachine::pushStackFrame(const bytecode::Function& function) {
   this->stackFrame = newFrame;
 }
 
-Variable VirtualMachine::popOpStack() {
+Variable runtime::VirtualMachine::popOpStack() {
   if (this->stackFrame == nullptr) {
     this->panic("No active stack frame found to pop op stack from!");
   }
@@ -155,7 +155,7 @@ Variable VirtualMachine::popOpStack() {
   return topOfStack;
 }
 
-void VirtualMachine::pushOpStack(Variable v) {
+void runtime::VirtualMachine::pushOpStack(Variable v) {
   if (this->stackFrame == nullptr) {
     this->panic("No active stack frame found to push op stack!");
   }
@@ -165,7 +165,7 @@ void VirtualMachine::pushOpStack(Variable v) {
   opStack->push_back(v);
 }
 
-void VirtualMachine::Add() {
+void runtime::VirtualMachine::Add() {
   Variable second = this->popOpStack();
   Variable first = this->popOpStack();
 
@@ -184,7 +184,7 @@ void VirtualMachine::Add() {
   }
 }
 
-void VirtualMachine::Subtract() {
+void runtime::VirtualMachine::Subtract() {
   Variable second = this->popOpStack();
   Variable first = this->popOpStack();
 
@@ -203,7 +203,7 @@ void VirtualMachine::Subtract() {
   }
 }
 
-void VirtualMachine::Multiply() {
+void runtime::VirtualMachine::Multiply() {
   Variable second = this->popOpStack();
   Variable first = this->popOpStack();
 
@@ -222,7 +222,7 @@ void VirtualMachine::Multiply() {
   }
 }
 
-void VirtualMachine::Divide() {
+void runtime::VirtualMachine::Divide() {
   Variable second = this->popOpStack();
   Variable first = this->popOpStack();
 
@@ -246,24 +246,59 @@ void VirtualMachine::Divide() {
   }
 }
 
-void VirtualMachine::Pop() {
+void runtime::VirtualMachine::Pop() {
   this->popOpStack();
 }
 
-void VirtualMachine::Print() {
-
+std::string VirtualMachine::variableToString(Variable var, bool panic) {
+  switch (var.type) {
+    case VariableType::Integer: {
+      return std::to_string(var.integerValue);
+    }
+    case VariableType::Float: {
+      return std::to_string(var.doubleValue);
+    }
+    case VariableType::Function: {
+      return "<function>";
+    }
+    case VariableType::Object: {
+      return "<object>";
+    }
+    case VariableType::String: {
+      return *var.stringValue->str;
+    }
+    case VariableType::Undefined: {
+      return "undefined";
+    }
+    case VariableType::Boolean: {
+      return std::to_string(var.boolValue);
+    }
+    default: {
+      if (panic) {
+        this->panic("Unknown varible type at print");
+      } else {
+        return "UKNOWN!";
+      }
+    }
+  }
 }
 
-void VirtualMachine::Read() {
-
+void runtime::VirtualMachine::Print() {
+  Variable var = this->popOpStack();
+  this->out << this->variableToString(var, true);
 }
 
-void VirtualMachine::Jump() {
+void runtime::VirtualMachine::Read() {
+  std::string read;
+  std::getline(this->in, read);
+}
+
+void runtime::VirtualMachine::Jump() {
   this->stackFrame->programCounter = this->getByteCodeParameter();
 }
 
-void VirtualMachine::JumpIfFalse() {
-  Variable top = this->popOpStack();
+void runtime::VirtualMachine::JumpIfFalse() {
+  Variable top{this->popOpStack()};
 
   switch (top.type) {
     case VariableType::Integer:
@@ -289,33 +324,86 @@ void VirtualMachine::JumpIfFalse() {
   }
 }
 
-void VirtualMachine::LoadConstant() {
+void runtime::VirtualMachine::LoadConstant() {
+  auto index = this->getByteCodeParameter();
 
+  if (index >= this->file->constants.size()) {
+    this->panic("Constant index out of bounds!");
+  }
+
+  bytecode::Constant constant = this->file->constants.at(index);
+
+  switch (constant.type) {
+    case bytecode::ConstantType::Boolean: {
+      this->pushBoolean(constant.boolValue);
+      return;
+    }
+    case bytecode::ConstantType::Integer: {
+      this->pushInteger(constant.intValue);
+      return;
+    }
+    case bytecode::ConstantType::Float: {
+      this->pushFloat(constant.floatValue);
+      return;
+    }
+    case bytecode::ConstantType::Undefined: {
+      this->pushUndefined();
+      return;
+    }
+    case bytecode::ConstantType::String: {
+      ni();
+    }
+  }
 }
 
-void VirtualMachine::LoadLocal() {
-
+void runtime::VirtualMachine::LoadLocal() {
+  ni();
 }
 
-void VirtualMachine::SetLocal() {
-
+void runtime::VirtualMachine::SetLocal() {
+  ni();
 }
 
-void VirtualMachine::Return() {
+void runtime::VirtualMachine::Return() {
   this->popStackFrame();
 }
 
-void VirtualMachine::Invoke() {
-
+void runtime::VirtualMachine::Invoke() {
+  ni();
 }
 
-void VirtualMachine::pushUndefined() {
-  Variable undefined;
+void runtime::VirtualMachine::pushUndefined() {
+  Variable undefined{};
   undefined.type = VariableType::Undefined;
   this->pushOpStack(undefined);
 }
 
-bool VirtualMachine::protectDifferentTypes(Variable v1, Variable v2) {
+void runtime::VirtualMachine::pushInteger(std::int64_t val) {
+  Variable variable{};
+  variable.type = VariableType::Integer;
+  variable.integerValue = val;
+  this->pushOpStack(variable);
+}
+
+void runtime::VirtualMachine::pushFloat(double val) {
+  Variable variable{};
+  variable.type = VariableType::Float;
+  variable.doubleValue = val;
+  this->pushOpStack(variable);
+}
+
+void runtime::VirtualMachine::pushBoolean(bool val) {
+  Variable variable{};
+  variable.type = VariableType::Boolean;
+  variable.doubleValue = val;
+  this->pushOpStack(variable);
+}
+
+std::size_t runtime::VirtualMachine::getByteCodeParameter() {
+  return this->stackFrame->byteCode->at(this->stackFrame->programCounter).parameter;
+}
+
+bool runtime::VirtualMachine::protectDifferentTypes(Variable v1, Variable v2) {
   if (v1.type != v2.type) {
     this->pushUndefined();
     return false;
@@ -324,8 +412,103 @@ bool VirtualMachine::protectDifferentTypes(Variable v1, Variable v2) {
   return true;
 }
 
-void VirtualMachine::panic(const std::string & message) {
-  this->out << message << std::endl;
+std::string runtime::VirtualMachine::byteCodeToString(bytecode::ByteCode bc, bool panic) {
+  switch (bc.instruction) {
+    case bytecode::ByteCodeInstruction::Halt: return "Halt";
+    case bytecode::ByteCodeInstruction::Add: return "Add";
+    case bytecode::ByteCodeInstruction::Subtract: return "Subtract";
+    case bytecode::ByteCodeInstruction::Multiply: return "Multiply";
+    case bytecode::ByteCodeInstruction::Divide: return "Divide";
+    case bytecode::ByteCodeInstruction::Pop: return "Pop";
+    case bytecode::ByteCodeInstruction::Print: return "Print";
+    case bytecode::ByteCodeInstruction::Read: return "Read";
+    case bytecode::ByteCodeInstruction::Jump: return "Jump";
+    case bytecode::ByteCodeInstruction::JumpIfFalse: return "JumpIfFalse";
+    case bytecode::ByteCodeInstruction::LoadConstant: return "LoadConstant(" + std::to_string(bc.parameter) + ")";
+    case bytecode::ByteCodeInstruction::LoadLocal: return "LoadLocal(" + std::to_string(bc.parameter) + ")";
+    case bytecode::ByteCodeInstruction::SetLocal: return "SetLocal(" + std::to_string(bc.parameter) + ")";
+    case bytecode::ByteCodeInstruction::Return: return "Return";
+    case bytecode::ByteCodeInstruction::Invoke: return "Invoke(" + std::to_string(bc.parameter) + ")";
+    case bytecode::ByteCodeInstruction::NoOp: return "NoOp";
+    default: {
+      if (panic) {
+        this->panic("Unkown bytecode instruction encountered");
+        return "";
+      } else {
+        return "<UNKNOWN>";
+      }
+    }
+  }
+}
+
+void runtime::VirtualMachine::printFunction(const bytecode::Function* fn) {
+  this->out << "| | Argument Count: " << fn->argumentCount << '\n';
+  this->out << "| | Local Count: " << fn->localsCount << '\n';
+  this->out << "| | Byte Code:\n";
+  for (std::size_t i = 0; i < stackFrame->byteCode->size(); i++) {
+    this->out << "| |   |" << i << "| " << this->byteCodeToString(fn->byteCode.at(i), false) << '\n';
+  }
+  this->out << "| \\------------------\n";
+}
+
+void runtime::VirtualMachine::panic(const std::string & message) {
+  if (this->isPanicing) {
+    this->out << "RECURSIVE CALL TO PANIC, JUST EXITING!" << std::endl;
+    exit(1);
+  }
+
+  this->isPanicing = true;
+
+  this->out << "PANIC!: " << message << "\n";
+
+  this->out << "Stack Frames:\n";
+
+  StackFrame* stackFrame = this->stackFrame.get();
+
+  int frameDepth = 0;
+
+  while (stackFrame != nullptr) {
+    this->out << "| Stack Frame: " << frameDepth << '\n';
+    this->out << "| | Program Counter: " << stackFrame->programCounter << '\n';
+    this->out << "| | Locals:\n";
+    for (std::size_t i = 0; i < stackFrame->locals.size(); i++) {
+      this->out << "| |   |" << i << "| " << this->variableToString(stackFrame->locals.at(i), false) << '\n';
+    }
+    this->out << "| | Op Stack:\n";
+    for (std::size_t i = 0; i < stackFrame->opStack.size(); i++) {
+      this->out << "| |   |" << i << "| " << this->variableToString(stackFrame->opStack.at(i), false) << '\n';
+    }
+    this->out << "| | Byte Code:\n";
+    for (std::size_t i = 0; i < stackFrame->byteCode->size(); i++) {
+      this->out << "| |   |" << i << "| " << this->byteCodeToString(stackFrame->byteCode->at(i), false) << '\n';
+    }
+    this->out << "| \\------------------\n";
+
+    if (stackFrame->outer) {
+      stackFrame = stackFrame->outer->get();
+    } else {
+      stackFrame = nullptr;
+    }
+  }
+  this->out << "\\------------------\n";
+
+  this->out << "Entrypoint:\n";
+  this->printFunction(&this->file->entrypoint);
+  this->out << "\\------------------\n";
+
+  this->out << "Functions:\n";
+  for (std::size_t i = 0; i < this->file->functions.size(); i++) {
+    this->out << "  Function: " << i << '\n';
+    this->printFunction(&this->file->functions.at(i));
+  }
+  this->out << "\\------------------\n";
+
+  // TODO: print constants
+
+  // TODO: print object constructors
+
+  this->out << std::endl;
+
   exit(1);
 }
 
