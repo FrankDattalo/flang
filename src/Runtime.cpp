@@ -18,11 +18,6 @@ struct Function {
   bytecode::Function* fn;
 };
 
-struct String {
-  bool isConstant;
-  std::string* str;
-};
-
 struct Variable {
   VariableType type;
 
@@ -32,7 +27,7 @@ struct Variable {
     bool boolValue;
     Object* objectValue;
     Function* functionValue;
-    String* stringValue;
+    const std::string* stringValue;
   };
 };
 
@@ -76,6 +71,7 @@ void runtime::VirtualMachine::run() noexcept {
       case bytecode::ByteCodeInstruction::LoadConstant: { this->LoadConstant(); break; }
       case bytecode::ByteCodeInstruction::Return: { this->Return(); break; }
       case bytecode::ByteCodeInstruction::Invoke: { this->Invoke(); break; }
+      case bytecode::ByteCodeInstruction::MakeFn: { this->MakeFn(); break; }
       case bytecode::ByteCodeInstruction::NoOp: { break; }
       default: {
         this->panic("Unknown bytecode found in instructions!");
@@ -87,11 +83,6 @@ void runtime::VirtualMachine::run() noexcept {
   }
 
   return;
-}
-
-void ni() {
-  std::cout << "NOT IMPLEMENTED" << std::endl;
-  exit(1);
 }
 
 void runtime::VirtualMachine::popStackFrame() {
@@ -160,9 +151,7 @@ void runtime::VirtualMachine::pushOpStack(Variable v) {
     this->panic("No active stack frame found to push op stack!");
   }
 
-  auto opStack = &this->stackFrame->opStack;
-
-  opStack->push_back(v);
+  this->stackFrame->opStack.push_back(v);
 }
 
 void runtime::VirtualMachine::Add() {
@@ -265,7 +254,7 @@ std::string VirtualMachine::variableToString(Variable var, bool panic) {
       return "<object>";
     }
     case VariableType::String: {
-      return *var.stringValue->str;
+      return *var.stringValue;
     }
     case VariableType::Undefined: {
       return "undefined";
@@ -351,25 +340,91 @@ void runtime::VirtualMachine::LoadConstant() {
       return;
     }
     case bytecode::ConstantType::String: {
-      ni();
+      this->pushString(constant.stringValue);
+      return;
     }
   }
 }
 
 void runtime::VirtualMachine::LoadLocal() {
-  ni();
+  if (this->stackFrame == nullptr) {
+    this->panic("No stack frame found in LoadLocal");
+    return;
+  }
+
+  auto stackFrame = this->stackFrame;
+
+  auto locals = &stackFrame->locals;
+
+  auto index = this->getByteCodeParameter();
+
+  if (index >= locals->size()) {
+    this->panic("Index out of bounds in LoadLocal");
+    return;
+  }
+
+  Variable local = locals->at(index);
+
+  this->pushOpStack(local);
 }
 
 void runtime::VirtualMachine::SetLocal() {
-  ni();
+  if (this->stackFrame == nullptr) {
+    this->panic("No stack frame found in LoadLocal");
+    return;
+  }
+
+  auto stackFrame = this->stackFrame;
+
+  auto locals = &stackFrame->locals;
+
+  auto index = this->getByteCodeParameter();
+
+  if (index >= locals->size()) {
+    this->panic("Index out of bounds in LoadLocal");
+    return;
+  }
+
+  Variable top = this->popOpStack();
+
+  locals->at(index) = top;
+}
+
+void runtime::VirtualMachine::MakeFn() {
+
 }
 
 void runtime::VirtualMachine::Return() {
+  Variable top = this->popOpStack();
   this->popStackFrame();
+  this->pushOpStack(top);
 }
 
 void runtime::VirtualMachine::Invoke() {
-  ni();
+  auto index = this->getByteCodeParameter();
+
+  if (index >= this->file->functions.size()) {
+    this->panic("Function index out of range in Invoke");
+    return;
+  }
+
+  auto fn = &this->file->functions.at(index);
+
+  std::vector<runtime::Variable> args;
+
+  for (std::size_t i = 0; i < fn->argumentCount; i++) {
+    args.push_back(this->popOpStack());
+  }
+
+  this->pushStackFrame(fn);
+
+  for (
+    std::size_t argIndex = args.size() - 1, localIndex = 0;
+    localIndex < args.size();
+    localIndex++, argIndex--
+  ) {
+    this->stackFrame->locals.at(localIndex) = args.at(argIndex);
+  }
 }
 
 void runtime::VirtualMachine::pushUndefined() {
@@ -396,6 +451,13 @@ void runtime::VirtualMachine::pushBoolean(bool val) {
   Variable variable{};
   variable.type = VariableType::Boolean;
   variable.doubleValue = val;
+  this->pushOpStack(variable);
+}
+
+void runtime::VirtualMachine::pushString(const std::string* val) {
+  Variable variable{};
+  variable.type = VariableType::String;
+  variable.stringValue = val;
   this->pushOpStack(variable);
 }
 

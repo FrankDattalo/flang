@@ -22,6 +22,13 @@ enum class ByteCodeInstruction {
   Return,
   Invoke,
   NoOp,
+  MakeFn,
+  Less,
+  LessOrEqual,
+  Greater,
+  GreaterOrEqual,
+  Not,
+  Equal,
 };
 
 struct ByteCode {

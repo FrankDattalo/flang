@@ -76,6 +76,16 @@ private:
 
   void Invoke();
 
+  void MakeFn();
+
+  void Less();
+
+  void LessOrEqual();
+
+  void Greater();
+
+  void GreaterOrEqual();
+
   bool protectDifferentTypes(Variable v1, Variable v2);
 
   void pushUndefined();
@@ -85,6 +95,8 @@ private:
   void pushFloat(double val);
 
   void pushBoolean(bool val);
+
+  void pushString(const std::string* str);
 
   std::size_t getByteCodeParameter();
 
