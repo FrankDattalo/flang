@@ -7,10 +7,10 @@ namespace bytecode {
 
 enum class ByteCodeInstruction {
   Halt,
-  Add,
-  Subtract,
-  Multiply,
-  Divide,
+  Add, // 2 args
+  Subtract, // 2 args
+  Multiply, // 2 args
+  Divide, // 2 args
   Print, // 1 arg, returns undefined
   Read, // no args, returns string
   Jump,
@@ -28,23 +28,23 @@ enum class ByteCodeInstruction {
   NoOp,
   MakeFn,
   MakeObj,
-  Less,
-  LessOrEqual,
-  Greater,
-  GreaterOrEqual,
-  Not,
-  Equal,
-  NotEqual,
-  And,
-  Or,
-  GetType,
-  CastToInt,
-  CastToFloat,
-  Length,
-  ChatAt,
-  StringAppend,
-  ObjectGet,
-  ObjectSet,
+  Less, //2 args, returns bool
+  LessOrEqual, //2 args, returns bool
+  Greater, //2 args, returns bool
+  GreaterOrEqual, //2 args, returns bool
+  Not, // 1 arg, returns bool
+  Equal, // 2 args, returns bool
+  NotEqual, // 2 args, returns bool
+  And, // 2 args, returns bool
+  Or, // 2 args, returns bool
+  GetType, // 1 arg, returns string
+  CastToInt, // 1 arg
+  CastToFloat, // 1 arg
+  Length, // 1 arg
+  ChatAt, // 2 args
+  StringAppend, // 2 args
+  ObjectGet, // 2 args
+  ObjectSet, // 3 args
   GetEnv, // 1 arg, returns string
 };
 
