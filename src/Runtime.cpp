@@ -2,11 +2,6 @@
 
 namespace runtime {
 
-void ni() {
-  std::cerr << "NOT IMPLEMENTED" << std::endl;
-  exit(1);
-}
-
 enum class VariableType {
   Undefined,
   Integer,
@@ -20,6 +15,7 @@ enum class VariableType {
 struct Object;
 
 struct Function {
+  std::vector<runtime::Variable> captures;
   const bytecode::Function* fn;
 };
 
@@ -153,7 +149,7 @@ void runtime::VirtualMachine::pushStackFrame(const bytecode::Function* function)
   auto newFrame = std::make_shared<StackFrame>();
   newFrame->byteCode = &function->byteCode;
 
-  for (std::size_t i = 0; i < function->localsCount; i++) {
+  for (std::size_t i = 0; i < function->localsCount + function->capturesCount; i++) {
     Variable undefined{};
     undefined.type = VariableType::Undefined;
     newFrame->locals.push_back(undefined);
@@ -428,7 +424,20 @@ void runtime::VirtualMachine::MakeFn() {
 
   auto fnPrototype = &this->file->functions.at(index);
   runtime::Function* fn = this->heap.NewFunction();
+
   fn->fn = fnPrototype;
+
+  fn->captures.clear();
+  fn->captures.reserve(fnPrototype->capturesCount);
+
+  for (
+    std::size_t captures = 0, index = fnPrototype->capturesCount - 1;
+    captures < fnPrototype->capturesCount;
+    captures++, index--
+  ) {
+    fn->captures.at(index) = this->popOpStack();
+  }
+
   this->pushFunction(fn);
 
   this->advance();
@@ -453,25 +462,51 @@ void runtime::VirtualMachine::Invoke() {
 
   auto fn = top.functionValue->fn;
 
-  std::vector<runtime::Variable> args;
+  std::vector<runtime::Variable> args{fn->argumentCount};
 
   for (std::size_t i = 0; i < fn->argumentCount; i++) {
     args.push_back(this->popOpStack());
   }
 
-  this->pushStackFrame(fn);
+  this->pushStackFrame(top.functionValue->fn);
+
+  std::size_t stackFrameLocalIndex = 0;
+
+  for (const auto var : top.functionValue->captures) {
+    this->stackFrame->locals.at(stackFrameLocalIndex) = var;
+    stackFrameLocalIndex++;
+  }
 
   for (
-    std::size_t argIndex = args.size() - 1, localIndex = 0;
-    localIndex < args.size();
-    localIndex++, argIndex--
+    std::size_t i = args.size();
+    i-- > 0;
   ) {
-    this->stackFrame->locals.at(localIndex) = args.at(argIndex);
+    this->stackFrame->locals.at(stackFrameLocalIndex) = args.at(i);
+    stackFrameLocalIndex++;
   }
 }
 
 void runtime::VirtualMachine::MakeObj() {
-  ni();
+
+  std::size_t objIndex = this->getByteCodeParameter();
+
+  if (objIndex >= this->file->objects.size()) {
+    this->panic("Index out of bounds in MakeObj");
+    return;
+  }
+
+  const auto& objProto = this->file->objects.at(objIndex);
+
+  auto ret = this->heap.NewObject();
+  ret->properties.clear();
+
+  for (std::size_t i = objProto.keys.size(); i-- > 0;) {
+    const std::string & key = objProto.keys.at(i);
+    const Variable value = this->popOpStack();
+    ret->properties.insert(std::make_pair(key, value));
+  }
+
+  this->pushObject(ret);
   this->advance();
 }
 
@@ -831,17 +866,76 @@ void runtime::VirtualMachine::StringAppend() {
 }
 
 void runtime::VirtualMachine::ObjectGet() {
-  ni();
+
+  Variable second = this->popOpStack();
+  Variable first = this->popOpStack();
+
+  if (first.type != VariableType::Object) {
+    this->pushUndefined();
+    this->advance();
+    return;
+  }
+
+  if (second.type != VariableType::String) {
+    this->pushUndefined();
+    this->advance();
+    return;
+  }
+
+  auto find = first.objectValue->properties.find(*second.stringValue);
+
+  if (find == first.objectValue->properties.end()) {
+    this->pushUndefined();
+  } else {
+    this->pushOpStack(find->second);
+  }
+
   this->advance();
 }
 
 void runtime::VirtualMachine::ObjectSet() {
-  ni();
+  Variable third = this->popOpStack();
+  Variable second = this->popOpStack();
+  Variable first = this->popOpStack();
+
+  if (first.type != VariableType::Object) {
+    this->pushUndefined();
+    this->advance();
+    return;
+  }
+
+  if (second.type != VariableType::String) {
+    this->pushUndefined();
+    this->advance();
+    return;
+  }
+
+  first.objectValue->properties.insert(std::make_pair(*second.stringValue, third));
+
   this->advance();
 }
 
 void runtime::VirtualMachine::GetEnv() {
-  ni();
+  Variable first = this->popOpStack();
+
+  if (first.type != VariableType::String) {
+    this->pushUndefined();
+    this->advance();
+    return;
+  }
+
+  auto getEnvVal = std::getenv(first.stringValue->c_str());
+
+  if (getEnvVal == nullptr) {
+    this->pushUndefined();
+
+  } else {
+    std::string* newString = this->heap.NewString();
+    newString->clear();
+    newString->assign(getEnvVal);
+    this->pushString(newString);
+  }
+
   this->advance();
 }
 
@@ -903,7 +997,7 @@ std::string VirtualMachine::variableToString(Variable var, bool panic) {
     }
     default: {
       if (panic) {
-        this->panic("Unknown varible type at print");
+        this->panic("Unknown varible type at variableToString");
       } else {
         return "UKNOWN!";
       }
@@ -927,7 +1021,7 @@ bool runtime::VirtualMachine::booleanValueOfVariable(Variable var) {
       return var.boolValue;
     }
     default: {
-      this->panic("Unknown varible type at jumpIfFalse");
+      this->panic("Unknown varible type at booleanValueOfVariable");
     }
   }
 }
@@ -1063,6 +1157,7 @@ void printConstantArray(std::ostream & out, const std::vector<T> & vec) {
 void runtime::VirtualMachine::printFunction(const bytecode::Function* fn) {
   this->out << "| | Argument Count: " << fn->argumentCount << '\n';
   this->out << "| | Local Count: " << fn->localsCount << '\n';
+  this->out << "| | Capture Count: " << fn->capturesCount << '\n';
   this->out << "| | Byte Code:\n";
   for (std::size_t i = 0; i < fn->byteCode.size(); i++) {
     this->out << "| |   |" << i << "| " << this->byteCodeToString(fn->byteCode.at(i), false) << '\n';

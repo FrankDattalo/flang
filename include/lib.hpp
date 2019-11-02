@@ -14,5 +14,6 @@
 #include <streambuf>
 #include <list>
 #include <unordered_map>
+#include <cstdlib>
 
 #endif // LIB_HPP

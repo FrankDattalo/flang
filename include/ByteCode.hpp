@@ -45,7 +45,7 @@ enum class ByteCodeInstruction {
   StringAppend,
   ObjectGet,
   ObjectSet,
-  GetEnv, // no args, returns object
+  GetEnv, // 1 arg, returns string
 };
 
 struct ByteCode {
@@ -64,15 +64,18 @@ struct ByteCode {
 struct Function {
   const std::size_t argumentCount;
   const std::size_t localsCount;
+  const std::size_t capturesCount;
   const std::vector<ByteCode> byteCode;
 
   explicit Function(
     std::size_t argumentCount,
     std::size_t localsCount,
+    std::size_t capturesCount,
     const std::vector<ByteCode> byteCode
   ) noexcept
   : argumentCount{argumentCount}
   , localsCount{localsCount}
+  , capturesCount{capturesCount}
   , byteCode{std::move(byteCode)}
   {}
 };

@@ -23,7 +23,7 @@ int main(int  /*argc*/, char**  /*argv*/) {
 
     auto compiledCode = std::make_shared<bytecode::CompiledFile>(
     bytecode::Function{
-        0, 3, {
+        0, 3, 0, {
         /* var x = 1 */
         bytecode::ByteCode{bytecode::ByteCodeInstruction::LoadIntegerConstant, 0}, //0
         bytecode::ByteCode{bytecode::ByteCodeInstruction::SetLocal, 0}, //1
@@ -70,7 +70,7 @@ int main(int  /*argc*/, char**  /*argv*/) {
     },
     std::vector<bytecode::Function>{
       bytecode::Function{
-        0, 1, {
+        0, 1, 0, {
           /* var _ = print("Hello, World!"); */
           bytecode::ByteCode{bytecode::ByteCodeInstruction::LoadStringConstant, 0},
           bytecode::ByteCode{bytecode::ByteCodeInstruction::Print, 0},
