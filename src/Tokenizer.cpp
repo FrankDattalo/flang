@@ -229,28 +229,47 @@ const std::vector<std::shared_ptr<TokenizerRule>> rules = {
   std::make_shared<LiteralTokenizerRule>(TokenType::UndefinedLiteral, "undefined"),
   std::make_shared<LiteralTokenizerRule>(TokenType::Period, "."),
   std::make_shared<LiteralTokenizerRule>(TokenType::Colon, ":"),
+
+  // math ops
   builtInFn("add"),
   builtInFn("subtract"),
   builtInFn("multiply"),
   builtInFn("divide"),
+
+  // comparisons
   builtInFn("equal"),
   builtInFn("notEqual"),
+
+  // boolean operations
   builtInFn("not"),
+  builtInFn("and"),
+  builtInFn("or"),
+
+  // numeric comparisons
   builtInFn("greater"),
   builtInFn("less"),
   builtInFn("greaterOrEqual"),
   builtInFn("lessOrEqual"),
+
+  // object manipulation
   builtInFn("get"),
   builtInFn("set"),
+
+  // io
   builtInFn("read"),
   builtInFn("print"),
   builtInFn("env"),
+
+  // run time type manipulation
   builtInFn("type"),
   builtInFn("int"),
   builtInFn("float"),
+
+  // string manipulation
   builtInFn("length"),
   builtInFn("charAt"),
   builtInFn("append"),
+
   std::make_shared<IdentifierTokenizerRule>(),
   std::make_shared<StringTokenizerRule>(),
   std::make_shared<FloatTokenizerRule>(),

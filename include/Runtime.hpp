@@ -12,25 +12,60 @@ struct Variable;
 
 struct Function;
 
+struct Object;
+
+class VirtualMachine;
+
+class Heap {
+private:
+  std::list<std::string*> createdStrings;
+  std::list<runtime::Function*> createdFunctions;
+  std::list<runtime::Object*> createdObjects;
+
+public:
+
+  explicit Heap(runtime::VirtualMachine* /*vm*/) noexcept;
+
+  virtual ~Heap() noexcept;
+
+  void StartGc() noexcept;
+
+  void EndGc() noexcept;
+
+  std::string* NewString() noexcept;
+
+  runtime::Function* NewFunction() noexcept;
+
+  runtime::Object* NewObject() noexcept;
+
+};
+
 class VirtualMachine {
 private:
   const std::shared_ptr<const bytecode::CompiledFile> file;
-  std::shared_ptr<StackFrame> stackFrame = nullptr;
+  std::shared_ptr<StackFrame> stackFrame;
+
+  Heap heap;
 
   std::ostream & out;
   std::istream & in;
   bool isPanicing;
+  bool isDebug;
 
 public:
   explicit VirtualMachine(
+    bool isDebug,
     std::ostream & out,
     std::istream & in,
     std::shared_ptr<const bytecode::CompiledFile> file
   ) noexcept
   : file{std::move(file)}
+  , stackFrame{nullptr}
+  , heap{this}
   , out{out}
   , in{in}
   , isPanicing{false}
+  , isDebug{isDebug}
   {}
 
   virtual ~VirtualMachine() = default;
@@ -56,8 +91,6 @@ private:
 
   void Divide();
 
-  void Pop();
-
   void Print();
 
   void Read();
@@ -66,7 +99,17 @@ private:
 
   void JumpIfFalse();
 
-  void LoadConstant();
+  void LoadIntegerConstant();
+
+  void LoadFloatConstant();
+
+  void LoadStringConstant();
+
+  void LoadUndefinedConstant();
+
+  void LoadBooleanTrueConstant();
+
+  void LoadBooleanFalseConstant();
 
   void LoadLocal();
 
@@ -78,6 +121,8 @@ private:
 
   void MakeFn();
 
+  void MakeObj();
+
   void Less();
 
   void LessOrEqual();
@@ -85,6 +130,34 @@ private:
   void Greater();
 
   void GreaterOrEqual();
+
+  void Not();
+
+  void Equal();
+
+  void NotEqual();
+
+  void And();
+
+  void Or();
+
+  void GetType();
+
+  void CastToInt();
+
+  void CastToFloat();
+
+  void Length();
+
+  void ChatAt();
+
+  void StringAppend();
+
+  void ObjectGet();
+
+  void ObjectSet();
+
+  void GetEnv();
 
   bool protectDifferentTypes(Variable v1, Variable v2);
 
@@ -98,6 +171,10 @@ private:
 
   void pushString(const std::string* str);
 
+  void pushFunction(runtime::Function* fn);
+
+  void pushObject(runtime::Object* obj);
+
   std::size_t getByteCodeParameter();
 
   std::string variableToString(Variable var, bool panic);
@@ -105,6 +182,14 @@ private:
   std::string byteCodeToString(bytecode::ByteCode bc, bool panic);
 
   void printFunction(const bytecode::Function* fn);
+
+  bool booleanValueOfVariable(Variable var);
+
+  bool variableEquals(Variable var1, Variable var2);
+
+  void print();
+
+  void advance();
 };
 
 }

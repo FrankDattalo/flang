@@ -11,24 +11,41 @@ enum class ByteCodeInstruction {
   Subtract,
   Multiply,
   Divide,
-  Pop,
-  Print,
-  Read,
+  Print, // 1 arg, returns undefined
+  Read, // no args, returns string
   Jump,
   JumpIfFalse,
-  LoadConstant,
+  LoadIntegerConstant,
+  LoadFloatConstant,
+  LoadStringConstant,
+  LoadUndefinedConstant,
+  LoadBooleanTrueConstant,
+  LoadBooleanFalseConstant,
   LoadLocal,
   SetLocal,
   Return,
   Invoke,
   NoOp,
   MakeFn,
+  MakeObj,
   Less,
   LessOrEqual,
   Greater,
   GreaterOrEqual,
   Not,
   Equal,
+  NotEqual,
+  And,
+  Or,
+  GetType,
+  CastToInt,
+  CastToFloat,
+  Length,
+  ChatAt,
+  StringAppend,
+  ObjectGet,
+  ObjectSet,
+  GetEnv, // no args, returns object
 };
 
 struct ByteCode {
@@ -70,64 +87,28 @@ struct ObjectConstructor {
   {}
 };
 
-enum class ConstantType {
-  Undefined, Boolean, Integer, Float, String,
-};
-
-struct Constant {
-  ConstantType type;
-
-  union {
-    bool boolValue;
-    std::int64_t intValue;
-    double floatValue;
-    const std::string* stringValue;
-  };
-
-  explicit Constant() noexcept
-  : type{ConstantType::Undefined}
-  {}
-
-  explicit Constant(bool boolValue) noexcept
-  : type{ConstantType::Boolean}
-  , boolValue{boolValue}
-  {}
-
-  explicit Constant(std::int64_t intValue) noexcept
-  : type{ConstantType::Integer}
-  , intValue{intValue}
-  {}
-
-  explicit Constant(double floatValue) noexcept
-  : type{ConstantType::Float}
-  , floatValue{floatValue}
-  {}
-
-  explicit Constant(const std::string& stringValue) noexcept
-  : type{ConstantType::String}
-  , stringValue{&stringValue}
-  {}
-};
-
 struct CompiledFile {
 
   const Function entrypoint;
   const std::vector<Function> functions;
   const std::vector<ObjectConstructor> objects;
-  const std::vector<Constant> constants;
+  const std::vector<std::int64_t> intConstants;
+  const std::vector<double> floatConstants;
   const std::vector<std::string> stringConstants;
 
   explicit CompiledFile(
     const Function entrypoint,
     const std::vector<Function> functions,
     const std::vector<ObjectConstructor> objects,
-    const std::vector<Constant> constants,
+    const std::vector<std::int64_t> intConstants,
+    const std::vector<double> floatConstants,
     const std::vector<std::string> stringConstants
   ) noexcept
   : entrypoint{std::move(entrypoint)}
   , functions{std::move(functions)}
   , objects{std::move(objects)}
-  , constants{std::move(constants)}
+  , intConstants{std::move(intConstants)}
+  , floatConstants{std::move(floatConstants)}
   , stringConstants{std::move(stringConstants)}
   {}
 
