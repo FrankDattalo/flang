@@ -81,6 +81,8 @@ private:
 
   Variable popOpStack();
 
+  Variable popOpStack(bool panic);
+
   void pushOpStack(Variable v);
 
   void Add();

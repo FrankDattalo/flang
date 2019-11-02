@@ -161,7 +161,7 @@ void runtime::VirtualMachine::pushStackFrame(const bytecode::Function* function)
   this->stackFrame = newFrame;
 }
 
-Variable runtime::VirtualMachine::popOpStack() {
+Variable runtime::VirtualMachine::popOpStack(bool panic) {
   if (this->stackFrame == nullptr) {
     this->panic("No active stack frame found to pop op stack from!");
   }
@@ -169,13 +169,21 @@ Variable runtime::VirtualMachine::popOpStack() {
   auto opStack = &this->stackFrame->opStack;
 
   if (opStack->empty()) {
-    this->panic("Could not pop op stack, it is empty!");
+    if (panic) {
+      this->panic("Could not pop op stack, it is empty!");
+    } else {
+      this->pushUndefined();
+    }
+  } else {
+    Variable topOfStack = opStack->at(opStack->size() - 1);
+    opStack->pop_back();
+
+    return topOfStack;
   }
+}
 
-  Variable topOfStack = opStack->at(opStack->size() - 1);
-  opStack->pop_back();
-
-  return topOfStack;
+Variable runtime::VirtualMachine::popOpStack() {
+  this->popOpStack(true);
 }
 
 void runtime::VirtualMachine::pushOpStack(Variable v) {
@@ -465,7 +473,7 @@ void runtime::VirtualMachine::Invoke() {
   std::vector<runtime::Variable> args{fn->argumentCount};
 
   for (std::size_t i = 0; i < fn->argumentCount; i++) {
-    args.push_back(this->popOpStack());
+    args.push_back(this->popOpStack(false));
   }
 
   this->pushStackFrame(top.functionValue->fn);
