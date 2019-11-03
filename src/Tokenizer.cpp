@@ -246,10 +246,10 @@ const std::vector<std::shared_ptr<TokenizerRule>> rules = {
   builtInFn("or"),
 
   // numeric comparisons
-  builtInFn("greater"),
-  builtInFn("less"),
   builtInFn("greaterOrEqual"),
   builtInFn("lessOrEqual"),
+  builtInFn("greater"),
+  builtInFn("less"),
 
   // object manipulation
   builtInFn("get"),

@@ -161,7 +161,7 @@ void runtime::VirtualMachine::pushStackFrame(const bytecode::Function* function)
   this->stackFrame = newFrame;
 }
 
-Variable runtime::VirtualMachine::popOpStack(bool panic) {
+Variable runtime::VirtualMachine::popOpStack() {
   if (this->stackFrame == nullptr) {
     this->panic("No active stack frame found to pop op stack from!");
   }
@@ -169,21 +169,14 @@ Variable runtime::VirtualMachine::popOpStack(bool panic) {
   auto opStack = &this->stackFrame->opStack;
 
   if (opStack->empty()) {
-    if (panic) {
-      this->panic("Could not pop op stack, it is empty!");
-    } else {
-      this->pushUndefined();
-    }
+    this->panic("Could not pop op stack, it is empty!");
+
   } else {
     Variable topOfStack = opStack->at(opStack->size() - 1);
     opStack->pop_back();
 
     return topOfStack;
   }
-}
-
-Variable runtime::VirtualMachine::popOpStack() {
-  this->popOpStack(true);
 }
 
 void runtime::VirtualMachine::pushOpStack(Variable v) {
@@ -434,9 +427,8 @@ void runtime::VirtualMachine::MakeFn() {
   runtime::Function* fn = this->heap.NewFunction();
 
   fn->fn = fnPrototype;
-
   fn->captures.clear();
-  fn->captures.reserve(fnPrototype->capturesCount);
+  fn->captures.resize(fnPrototype->capturesCount);
 
   for (
     std::size_t captures = 0, index = fnPrototype->capturesCount - 1;
@@ -460,20 +452,36 @@ void runtime::VirtualMachine::Return() {
 }
 
 void runtime::VirtualMachine::Invoke() {
+
+  std::size_t argCount = this->getByteCodeParameter();
+
+  std::vector<runtime::Variable> args;
+  args.reserve(argCount);
+
+  if (this->stackFrame == nullptr) {
+    this->panic("No stack frame found in Invoke");
+    return;
+  }
+
+  // index 0 <- arg n
+  // index 1 <- arg n - 1
+  // index n - 1 <- arg 1
+  // index n <- arg 0
+
+  for (std::size_t i = 0; i < argCount; i++) {
+    if (this->stackFrame->opStack.empty()) {
+      break;
+    }
+
+    args.push_back(this->popOpStack());
+  }
+
   Variable top = this->popOpStack();
 
   if (top.type != VariableType::Function) {
     this->pushUndefined();
     this->advance();
     return;
-  }
-
-  auto fn = top.functionValue->fn;
-
-  std::vector<runtime::Variable> args{fn->argumentCount};
-
-  for (std::size_t i = 0; i < fn->argumentCount; i++) {
-    args.push_back(this->popOpStack(false));
   }
 
   this->pushStackFrame(top.functionValue->fn);
@@ -1118,7 +1126,7 @@ std::string runtime::VirtualMachine::byteCodeToString(bytecode::ByteCode bc, boo
     case bytecode::ByteCodeInstruction::LoadLocal: return "LoadLocal" PARAM;
     case bytecode::ByteCodeInstruction::SetLocal: return "SetLocal" PARAM;
     case bytecode::ByteCodeInstruction::Return: return "Return";
-    case bytecode::ByteCodeInstruction::Invoke: return "Invoke";
+    case bytecode::ByteCodeInstruction::Invoke: return "Invoke" PARAM;
     case bytecode::ByteCodeInstruction::NoOp: return "NoOp";
     case bytecode::ByteCodeInstruction::MakeFn: return "MakeFn" PARAM;
     case bytecode::ByteCodeInstruction::MakeObj: return "MakeObj" PARAM;
@@ -1242,6 +1250,7 @@ void runtime::VirtualMachine::print() {
   this->out << std::endl;
 }
 
+[[noreturn]]
 void runtime::VirtualMachine::panic(const std::string & message) {
   if (this->isPanicing) {
     this->out << "RECURSIVE CALL TO PANIC, JUST EXITING!" << std::endl;

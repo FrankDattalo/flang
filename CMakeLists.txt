@@ -80,5 +80,6 @@ add_test(fail_semantic13 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_se
 add_test(fail_semantic15 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic15.f semantic_analysis)
 add_test(fail_semantic16 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic16.f semantic_analysis)
 add_test(fail_semantic17 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic17.f semantic_analysis)
+add_test(fail_semantic18 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic18.f semantic_analysis)
 
 add_test(fail_parsing1 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_parsing1.f parsing)

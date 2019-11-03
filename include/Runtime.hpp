@@ -77,11 +77,10 @@ private:
 
   void popStackFrame();
 
+  [[noreturn]]
   void panic(const std::string & message);
 
   Variable popOpStack();
-
-  Variable popOpStack(bool panic);
 
   void pushOpStack(Variable v);
 

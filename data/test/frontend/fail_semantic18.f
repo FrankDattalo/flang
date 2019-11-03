@@ -1,0 +1,26 @@
+var _ = undefined;
+
+_ = add(1);
+_ = subtract(2);
+_ = multiply(3, 3, 4);
+_ = divide();
+_ = equal(1);
+_ = notEqual(1);
+_ = not();
+_ = and(1, 2, 3);
+_ = or(1);
+_ = greater(1, 2, 3);
+_ = less(1);
+_ = greaterOrEqual(1);
+_ = lessOrEqual(2);
+_ = get(1);
+_ = set(1);
+_ = read(1);
+_ = print(1, 2);
+_ = env(1, 2);
+_ = type(2, 3);
+_ = int(1, 2);
+_ = float(3, 2);
+_ = length(1, 2);
+_ = charAt(1, 2, 3);
+_ = append(1, 2, 3);

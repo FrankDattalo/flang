@@ -87,6 +87,7 @@ class SemanticAnalyzerRun : public AstWalker {
 public:
   std::ostream & out;
   const std::shared_ptr<const Readable> reader;
+  const std::unordered_map<std::string, std::size_t> builtInFunctionArgumentCounts;
 
   // these are modified to check semantic corectness
   bool error;
@@ -98,6 +99,32 @@ public:
   explicit SemanticAnalyzerRun(std::ostream & out, std::shared_ptr<const Readable> reader) noexcept
   : out{out}
   , reader{std::move(reader)}
+  , builtInFunctionArgumentCounts{{
+    {"add", 2},
+    {"subtract", 2},
+    {"multiply", 2},
+    {"divide", 2},
+    {"equal", 2},
+    {"notEqual", 2},
+    {"not", 1},
+    {"and", 2},
+    {"or", 2},
+    {"greater", 2},
+    {"less", 2},
+    {"greaterOrEqual", 2},
+    {"lessOrEqual", 2},
+    {"get", 2},
+    {"set", 3},
+    {"read", 0},
+    {"print", 1},
+    {"env", 1},
+    {"type", 1},
+    {"int", 1},
+    {"float", 1},
+    {"length", 1},
+    {"charAt", 2},
+    {"append", 2}
+  }}
   , error{false}
   , functionDept{0}
   , inLoop{false}
@@ -235,6 +262,21 @@ public:
   // mark in loop to false
   void onExitWhileStatementAstNode(WhileStatementAstNode* /*node*/) noexcept override {
     this->inLoop = false;
+  }
+
+  void onEnterBuiltInFunctionInvocationExpressionAstNode(BuiltInFunctionInvocationExpressionAstNode* fn) noexcept override {
+    auto find = this->builtInFunctionArgumentCounts.find(fn->identifier->value);
+
+    Error::assertWithPanic(
+      find != this->builtInFunctionArgumentCounts.end(),
+      "onEnterBuiltInFunctionInvocationExpressionAstNode found a built in function it does not know about");
+
+    std::size_t count = find->second;
+
+    if (count != fn->expressions.size()) {
+      this->reportError(fn->identifier,
+        "Argument size for built in function did not match expected count of " + std::to_string(count));
+    }
   }
 
   // pop scope, decrease function dept, and restore loop setting
