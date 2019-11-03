@@ -469,10 +469,6 @@ void runtime::VirtualMachine::Invoke() {
   // index n <- arg 0
 
   for (std::size_t i = 0; i < argCount; i++) {
-    if (this->stackFrame->opStack.empty()) {
-      break;
-    }
-
     args.push_back(this->popOpStack());
   }
 
