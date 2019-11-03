@@ -28,6 +28,8 @@ set(SOURCES
   ${PROJECT_SOURCE_DIR}/src/TokenBuffer.cpp
   ${PROJECT_SOURCE_DIR}/src/Tokenizer.cpp
   ${PROJECT_SOURCE_DIR}/src/Runtime.cpp
+  ${PROJECT_SOURCE_DIR}/src/AstCompiler.cpp
+  ${PROJECT_SOURCE_DIR}/src/Interpreter.cpp
 )
 
 set(TEST_SOURCES)

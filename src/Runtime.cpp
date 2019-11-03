@@ -55,6 +55,9 @@ void runtime::VirtualMachine::run() noexcept {
       this->out << "BEGIN DEBUG\n";
       this->print();
       this->out << "END DEBUG\n";
+
+      std::string ignore;
+      std::getline(std::cin, ignore);
     }
 
     if (this->stackFrame->programCounter >= this->stackFrame->byteCode->size()) {
@@ -351,19 +354,16 @@ void runtime::VirtualMachine::LoadStringConstant() {
 
 void runtime::VirtualMachine::LoadUndefinedConstant() {
   this->pushUndefined();
-
   this->advance();
 }
 
 void runtime::VirtualMachine::LoadBooleanTrueConstant() {
   this->pushBoolean(true);
-
   this->advance();
 }
 
 void runtime::VirtualMachine::LoadBooleanFalseConstant() {
   this->pushBoolean(false);
-
   this->advance();
 }
 

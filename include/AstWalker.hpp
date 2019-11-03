@@ -11,24 +11,24 @@ public:
   virtual ~AstWalker() noexcept = default;
 
   // abstract nodes
-  void visitStatementAstNode(StatementAstNode* node) noexcept;
-  void visitExpressionAstNode(ExpressionAstNode* node) noexcept;
+  virtual void visitStatementAstNode(StatementAstNode* node) noexcept;
+  virtual void visitExpressionAstNode(ExpressionAstNode* node) noexcept;
 
   // concrete walkers
-  void visitScriptAstNode(ScriptAstNode* node) noexcept;
-  void visitDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept;
-  void visitAssignStatementAstNode(AssignStatementAstNode* node) noexcept;
-  void visitIfStatementAstNode(IfStatementAstNode* node) noexcept;
-  void visitWhileStatementAstNode(WhileStatementAstNode* node) noexcept;
-  void visitBreakStatementAstNode(BreakStatementAstNode* node) noexcept;
-  void visitReturnStatementAstNode(ReturnStatementAstNode* node) noexcept;
-  void visitBlockStatementAstNode(BlockStatementAstNode* node) noexcept;
-  void visitLiteralExpressionAstNode(LiteralExpressionAstNode* node) noexcept;
-  void visitIdentifierExpressionAstNode(IdentifierExpressionAstNode* node) noexcept;
-  void visitFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode* node) noexcept;
-  void visitBuiltInFunctionInvocationExpressionAstNode(BuiltInFunctionInvocationExpressionAstNode* node) noexcept;
-  void visitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode* node) noexcept;
-  void visitObjectDeclarationExpressionAstNode(ObjectDeclarationExpressionAstNode* node) noexcept;
+  virtual void visitScriptAstNode(ScriptAstNode* node) noexcept;
+  virtual void visitDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept;
+  virtual void visitAssignStatementAstNode(AssignStatementAstNode* node) noexcept;
+  virtual void visitIfStatementAstNode(IfStatementAstNode* node) noexcept;
+  virtual void visitWhileStatementAstNode(WhileStatementAstNode* node) noexcept;
+  virtual void visitBreakStatementAstNode(BreakStatementAstNode* node) noexcept;
+  virtual void visitReturnStatementAstNode(ReturnStatementAstNode* node) noexcept;
+  virtual void visitBlockStatementAstNode(BlockStatementAstNode* node) noexcept;
+  virtual void visitLiteralExpressionAstNode(LiteralExpressionAstNode* node) noexcept;
+  virtual void visitIdentifierExpressionAstNode(IdentifierExpressionAstNode* node) noexcept;
+  virtual void visitFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode* node) noexcept;
+  virtual void visitBuiltInFunctionInvocationExpressionAstNode(BuiltInFunctionInvocationExpressionAstNode* node) noexcept;
+  virtual void visitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode* node) noexcept;
+  virtual void visitObjectDeclarationExpressionAstNode(ObjectDeclarationExpressionAstNode* node) noexcept;
 
   // enter callbacks
   virtual void onEnterScriptAstNode(ScriptAstNode*  /*node*/) noexcept {}

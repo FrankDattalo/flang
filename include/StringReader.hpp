@@ -9,7 +9,7 @@ public:
   const std::string file;
   std::size_t index;
 
-  explicit StringReader(std::string  file) noexcept
+  explicit StringReader(std::string file) noexcept
   : file{std::move(file)}, index{0}
   {}
 

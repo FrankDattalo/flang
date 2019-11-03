@@ -1,0 +1,1 @@
+var _ = print("Hello, World!");
