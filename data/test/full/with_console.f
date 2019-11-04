@@ -35,11 +35,14 @@ while (lessOrEqual(i, 10)) {
 
   if (equal(name, "quit")) {
     _ = println("Name was quit!");
-    _ = printPath(println);
-    break;
 
   } else {
     _ = println("Name was not quit!");
+  }
+
+  if (equal(name, "quit")) {
+    _ = printPath(println);
+    break;
   }
 
   i = add(i, 1);

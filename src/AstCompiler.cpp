@@ -200,6 +200,7 @@ public:
     this->emit(bytecode::ByteCodeInstruction::JumpIfFalse);
     this->visitStatementAstNode(node->ifStatement.get());
     if (node->elseStatement) {
+      this->emit(bytecode::ByteCodeInstruction::Jump);
       this->ec->elseStatementStartIndex.push_back(this->ec->byteCode.size());
       this->visitStatementAstNode(node->elseStatement->get());
     }
@@ -306,6 +307,12 @@ public:
         "onExitIfStatementAstNode encountered if exit statement with valid ekse but elseStatementStartIndex is empty");
 
       jumpIndex = this->ec->elseStatementStartIndex.at(this->ec->elseStatementStartIndex.size() - 1);
+
+      Error::assertWithPanic(jumpIndex > 0,
+        "onExitIfStatementAstNode encountered jumpIndex == 0 for after if statement -> jump past else");
+
+      this->ec->UpdateParameterAtIndex(jumpIndex - 1, this->ec->byteCode.size());
+
       this->ec->elseStatementStartIndex.pop_back();
 
     } else {
