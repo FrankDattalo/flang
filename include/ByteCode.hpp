@@ -71,7 +71,7 @@ struct Function {
     std::size_t argumentCount,
     std::size_t localsCount,
     std::size_t capturesCount,
-    const std::vector<ByteCode> byteCode
+    std::vector<ByteCode> byteCode
   ) noexcept
   : argumentCount{argumentCount}
   , localsCount{localsCount}
@@ -84,7 +84,7 @@ struct ObjectConstructor {
   const std::vector<std::string> keys;
 
   explicit ObjectConstructor(
-    const std::vector<std::string> keys
+    std::vector<std::string> keys
   ) noexcept
   : keys{std::move(keys)}
   {}
@@ -100,12 +100,12 @@ struct CompiledFile {
   const std::vector<std::string> stringConstants;
 
   explicit CompiledFile(
-    const Function entrypoint,
-    const std::vector<Function> functions,
-    const std::vector<ObjectConstructor> objects,
-    const std::vector<std::int64_t> intConstants,
-    const std::vector<double> floatConstants,
-    const std::vector<std::string> stringConstants
+    Function entrypoint,
+    std::vector<Function> functions,
+    std::vector<ObjectConstructor> objects,
+    std::vector<std::int64_t> intConstants,
+    std::vector<double> floatConstants,
+    std::vector<std::string> stringConstants
   ) noexcept
   : entrypoint{std::move(entrypoint)}
   , functions{std::move(functions)}

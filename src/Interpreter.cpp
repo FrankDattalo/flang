@@ -25,13 +25,13 @@ std::shared_ptr<ScriptAstNode> parseScript(std::ostream & out, const std::string
 
 std::shared_ptr<bytecode::CompiledFile> compile(std::shared_ptr<ScriptAstNode> script) {
   auto compiler = std::make_shared<compiler::AstCompiler>();
-  return compiler->compile(script);
+  return compiler->compile(std::move(script));
 }
 
 void interpreter::Interpreter::Run(const std::string & data) {
 
   std::shared_ptr<ScriptAstNode> script = parseScript(this->out, data);
   auto compiledFile = compile(script);
-  auto runtime = std::make_shared<runtime::VirtualMachine>(false, this->out, this->in, compiledFile);
+  auto runtime = std::make_shared<runtime::VirtualMachine>(false, this->out, this->in, std::move(compiledFile));
   runtime->run();
 }

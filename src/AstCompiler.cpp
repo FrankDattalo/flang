@@ -162,7 +162,7 @@ public:
   }
 
   void onEnterBreakStatementAstNode(BreakStatementAstNode*  /*node*/) noexcept override {
-    Error::assertWithPanic(this->ec->loopStartIndices.size() > 0,
+    Error::assertWithPanic(!this->ec->loopStartIndices.empty(),
       "onEnterBreakStatementAstNode encountered break statement but loopStartIndices empty");
 
     std::size_t breakIndex = this->ec->byteCode.size();
@@ -294,7 +294,7 @@ public:
   }
 
   void onExitIfStatementAstNode(IfStatementAstNode* node) noexcept override {
-    Error::assertWithPanic(this->ec->ifConditionEvalJumpIndices.size() > 0,
+    Error::assertWithPanic(!this->ec->ifConditionEvalJumpIndices.empty(),
       "onExitIfStatementAstNode encountered if exit statement but ifConditionEvalJumpIndices is empty");
 
     std::size_t ifEvalIndex = this->ec->ifConditionEvalJumpIndices.at(this->ec->ifConditionEvalJumpIndices.size() - 1);
@@ -303,7 +303,7 @@ public:
     std::size_t jumpIndex;
 
     if (node->elseStatement) {
-      Error::assertWithPanic(this->ec->elseStatementStartIndex.size() > 0,
+      Error::assertWithPanic(!this->ec->elseStatementStartIndex.empty(),
         "onExitIfStatementAstNode encountered if exit statement with valid ekse but elseStatementStartIndex is empty");
 
       jumpIndex = this->ec->elseStatementStartIndex.at(this->ec->elseStatementStartIndex.size() - 1);
@@ -323,10 +323,10 @@ public:
   }
 
   void onExitWhileStatementAstNode(WhileStatementAstNode*  /*node*/) noexcept override {
-    Error::assertWithPanic(this->ec->loopStartIndices.size() > 0,
+    Error::assertWithPanic(!this->ec->loopStartIndices.empty(),
       "onExitWhileStatementAstNode encountered while exit statement but loopStartIndices is empty");
 
-    Error::assertWithPanic(this->ec->loopConditionEvalJumpIndices.size() > 0,
+    Error::assertWithPanic(!this->ec->loopConditionEvalJumpIndices.empty(),
       "onExitWhileStatementAstNode encountered while exit statement but loopConditionEvalJumpIndices is empty");
 
     std::size_t loopStartIndex = this->ec->loopStartIndices.at(this->ec->loopStartIndices.size() - 1);
@@ -388,7 +388,7 @@ public:
 
     std::size_t fnIndex = this->functions.size();
 
-    this->functions.push_back(bytecode::Function{
+    this->functions.emplace_back(bytecode::Function{
       node->parameters.size(),
       this->ec->variables.size(),
       0,
@@ -411,7 +411,7 @@ public:
 
     std::size_t objectIndex = this->objects.size();
 
-    this->objects.push_back(bytecode::ObjectConstructor{keys});
+    this->objects.emplace_back(bytecode::ObjectConstructor{keys});
 
     this->emit(bytecode::ByteCodeInstruction::MakeObj, objectIndex);
   }
