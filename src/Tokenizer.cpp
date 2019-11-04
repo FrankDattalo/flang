@@ -7,31 +7,6 @@ public:
   virtual TokenType getType() noexcept = 0;
 };
 
-class LiteralTokenizerRule : public TokenizerRule {
-public:
-  const TokenType type;
-  const std::string literal;
-
-  explicit LiteralTokenizerRule(TokenType type, std::string  literal) noexcept
-  : type{type}, literal{std::move(literal)}
-  {}
-
-  virtual ~LiteralTokenizerRule() = default;
-
-  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Readable> reader) noexcept override {
-    for (std::size_t i = 0; i < this->literal.length(); i++) {
-      if (this->literal.at(i) != reader->charAt(i)) {
-        return std::make_pair(false, 0);
-      }
-    }
-    return std::make_pair(true, this->literal.length());
-  }
-
-  TokenType getType() noexcept override {
-    return this->type;
-  }
-};
-
 bool isNumeric(char c) {
   return '0' <= c && c <= '9';
 }
@@ -51,6 +26,39 @@ bool isLiteralFirst(char c) {
 bool isLiteralRest(char c) {
   return isLowerAlpha(c) || isUpperAlpha(c) || (c == '_') || isNumeric(c);
 }
+
+class LiteralTokenizerRule : public TokenizerRule {
+public:
+  const TokenType type;
+  const std::string literal;
+  const bool nextCharMustBeNonAlpha;
+
+  explicit LiteralTokenizerRule(TokenType type, std::string literal, bool nextCharMustBeNonAlpha) noexcept
+  : type{type}
+  , literal{std::move(literal)}
+  , nextCharMustBeNonAlpha{nextCharMustBeNonAlpha}
+  {}
+
+  virtual ~LiteralTokenizerRule() = default;
+
+  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Readable> reader) noexcept override {
+    for (std::size_t i = 0; i < this->literal.length(); i++) {
+      if (this->literal.at(i) != reader->charAt(i)) {
+        return std::make_pair(false, 0);
+      }
+    }
+
+    if (this->nextCharMustBeNonAlpha && isLiteralRest(reader->charAt(this->literal.size()))) {
+      return std::make_pair(false, 0);
+    }
+
+    return std::make_pair(true, this->literal.length());
+  }
+
+  TokenType getType() noexcept override {
+    return this->type;
+  }
+};
 
 class IdentifierTokenizerRule : public TokenizerRule {
 public:
@@ -226,36 +234,36 @@ public:
   }
 };
 
-#define builtInFn(x) std::make_shared<LiteralTokenizerRule>(TokenType::BuiltInFunctionName, x)
+#define builtInFn(x) std::make_shared<LiteralTokenizerRule>(TokenType::BuiltInFunctionName, x, true)
 
 const std::vector<std::shared_ptr<TokenizerRule>> rules = {
-  std::make_shared<LiteralTokenizerRule>(TokenType::LeftCurly, "{"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::RightCurly, "}"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\r\n"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\r"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\n"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\t"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, " "),
-  std::make_shared<LiteralTokenizerRule>(TokenType::LeftParen, "("),
-  std::make_shared<LiteralTokenizerRule>(TokenType::RightParen, ")"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::LeftBracket, "["),
-  std::make_shared<LiteralTokenizerRule>(TokenType::RightBracket, "]"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::Function, "function"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::Return, "return"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::Break, "break"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::For, "for"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::If, "if"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::Else, "else"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::While, "while"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::SemiColon, ";"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::Var, "var"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::Assign, "="),
-  std::make_shared<LiteralTokenizerRule>(TokenType::Comma, ","),
-  std::make_shared<LiteralTokenizerRule>(TokenType::BooleanLiteral, "true"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::BooleanLiteral, "false"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::UndefinedLiteral, "undefined"),
-  std::make_shared<LiteralTokenizerRule>(TokenType::Period, "."),
-  std::make_shared<LiteralTokenizerRule>(TokenType::Colon, ":"),
+  std::make_shared<LiteralTokenizerRule>(TokenType::LeftCurly, "{", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::RightCurly, "}", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\r\n", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\r", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\n", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, "\t", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::WhiteSpace, " ", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::LeftParen, "(", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::RightParen, ")", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::LeftBracket, "[", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::RightBracket, "]", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::Function, "function", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::Return, "return", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::Break, "break", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::For, "for", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::If, "if", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::Else, "else", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::While, "while", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::SemiColon, ";", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::Var, "var", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::Assign, "=", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::Comma, ",", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::BooleanLiteral, "true", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::BooleanLiteral, "false", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::UndefinedLiteral, "undefined", true),
+  std::make_shared<LiteralTokenizerRule>(TokenType::Period, ".", false),
+  std::make_shared<LiteralTokenizerRule>(TokenType::Colon, ":", false),
 
   // math ops
   builtInFn("add"),

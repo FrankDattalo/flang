@@ -4,6 +4,13 @@ var _ = undefined;
 
 var i = 1;
 
+var printPath = function() {
+  var path = env("PATH");
+  var _ = print("Path: ");
+  _ = print(path);
+  return;
+};
+
 while (lessOrEqual(i, 10)) {
   _ = print("Execution ");
   _ = print(i);
@@ -15,6 +22,8 @@ while (lessOrEqual(i, 10)) {
 
   if (equal(name, "quit")) {
     _ = print("Name was quit!");
+    _ = print("\n");
+    _ = printPath();
     break;
 
   } else {
