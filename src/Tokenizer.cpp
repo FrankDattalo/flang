@@ -199,6 +199,33 @@ public:
   }
 };
 
+class CommentTokenizerRule : public TokenizerRule {
+public:
+  explicit CommentTokenizerRule() noexcept = default;
+
+  virtual ~CommentTokenizerRule() = default;
+
+  std::pair<bool, std::size_t> tryMatch(std::shared_ptr<Readable> reader) noexcept override {
+    std::size_t i = 0;
+
+    if (reader->charAt(i) != '#') {
+      return std::make_pair(false, 0);
+    }
+
+    i++;
+
+    while (reader->charAt(i) != '\0' && reader->charAt(i) != '\n' && reader->charAt(i) != '\r') {
+      i++;
+    }
+
+    return std::make_pair(true, i);
+  }
+
+  TokenType getType() noexcept override {
+    return TokenType::WhiteSpace;
+  }
+};
+
 #define builtInFn(x) std::make_shared<LiteralTokenizerRule>(TokenType::BuiltInFunctionName, x)
 
 const std::vector<std::shared_ptr<TokenizerRule>> rules = {
@@ -274,6 +301,7 @@ const std::vector<std::shared_ptr<TokenizerRule>> rules = {
   std::make_shared<StringTokenizerRule>(),
   std::make_shared<FloatTokenizerRule>(),
   std::make_shared<IntegerTokenizerRule>(),
+  std::make_shared<CommentTokenizerRule>(),
 };
 
 #undef builtInFn

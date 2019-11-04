@@ -2,14 +2,9 @@
 
 namespace compiler {
 
-void ni(const std::string & str) {
-  std::cerr << "Not implemented: " << str << std::endl;
-  exit(1);
-}
-
-// TODO: make this faster? O(n) to find the proper variable
 class EmissionContext {
 public:
+  // TODO: make this faster? O(n) to find the proper variable
   std::vector<std::string> variables;
   std::size_t firstFreeVariablesIndex{0};
   std::vector<std::size_t> scopeStartIndex{0};
@@ -19,6 +14,9 @@ public:
   std::vector<std::size_t> loopStartIndices;
   std::vector<std::size_t> loopConditionEvalJumpIndices;
   std::unordered_map<std::size_t, std::shared_ptr<std::vector<std::size_t>>> breakStatementsForLoops;
+
+  std::vector<std::size_t> ifConditionEvalJumpIndices;
+  std::vector<std::size_t> elseStatementStartIndex;
 
   explicit EmissionContext(
     std::shared_ptr<EmissionContext> outerContext
@@ -51,6 +49,13 @@ public:
     this->scopeStartIndex.push_back(this->firstFreeVariablesIndex);
   }
 
+  void UpdateParameterAtIndex(std::size_t index, std::size_t parameter) {
+    // TODO: fix this horribleness
+    bytecode::ByteCode & bc = this->byteCode.at(index);
+    std::size_t* parameterPtr = const_cast<std::size_t*>(&bc.parameter);
+    *parameterPtr = parameter;
+  }
+
   void PopScope() {
     Error::assertWithPanic(!this->scopeStartIndex.empty(), "PopScope called with empty scopeStartIndex");
 
@@ -80,30 +85,30 @@ public:
     std::shared_ptr<compiler::EmissionContext> ec;
 
     std::unordered_map<std::string, bytecode::ByteCodeInstruction> builtInFunctionLookup{{
-      {"add", bytecode::ByteCodeInstruction::Add},
-      {"subtract", bytecode::ByteCodeInstruction::Subtract},
-      {"multiply", bytecode::ByteCodeInstruction::Multiply},
-      {"divide", bytecode::ByteCodeInstruction::Divide},
-      {"equal", bytecode::ByteCodeInstruction::Equal},
-      {"notEqual", bytecode::ByteCodeInstruction::NotEqual},
-      {"not", bytecode::ByteCodeInstruction::Not},
-      {"and", bytecode::ByteCodeInstruction::And},
-      {"or", bytecode::ByteCodeInstruction::Or},
-      {"greater", bytecode::ByteCodeInstruction::Greater},
-      {"less", bytecode::ByteCodeInstruction::Less},
+      {"add",            bytecode::ByteCodeInstruction::Add},
+      {"subtract",       bytecode::ByteCodeInstruction::Subtract},
+      {"multiply",       bytecode::ByteCodeInstruction::Multiply},
+      {"divide",         bytecode::ByteCodeInstruction::Divide},
+      {"equal",          bytecode::ByteCodeInstruction::Equal},
+      {"notEqual",       bytecode::ByteCodeInstruction::NotEqual},
+      {"not",            bytecode::ByteCodeInstruction::Not},
+      {"and",            bytecode::ByteCodeInstruction::And},
+      {"or",             bytecode::ByteCodeInstruction::Or},
+      {"greater",        bytecode::ByteCodeInstruction::Greater},
+      {"less",           bytecode::ByteCodeInstruction::Less},
       {"greaterOrEqual", bytecode::ByteCodeInstruction::GreaterOrEqual},
-      {"lessOrEqual", bytecode::ByteCodeInstruction::LessOrEqual},
-      {"get", bytecode::ByteCodeInstruction::ObjectGet},
-      {"set", bytecode::ByteCodeInstruction::ObjectSet},
-      {"read", bytecode::ByteCodeInstruction::Read},
-      {"print", bytecode::ByteCodeInstruction::Print},
-      {"env", bytecode::ByteCodeInstruction::GetEnv},
-      {"type", bytecode::ByteCodeInstruction::GetType},
-      {"int", bytecode::ByteCodeInstruction::CastToInt},
-      {"float", bytecode::ByteCodeInstruction::CastToFloat},
-      {"length", bytecode::ByteCodeInstruction::Length},
-      {"charAt", bytecode::ByteCodeInstruction::ChatAt},
-      {"append", bytecode::ByteCodeInstruction::StringAppend}
+      {"lessOrEqual",    bytecode::ByteCodeInstruction::LessOrEqual},
+      {"get",            bytecode::ByteCodeInstruction::ObjectGet},
+      {"set",            bytecode::ByteCodeInstruction::ObjectSet},
+      {"read",           bytecode::ByteCodeInstruction::Read},
+      {"print",          bytecode::ByteCodeInstruction::Print},
+      {"env",            bytecode::ByteCodeInstruction::GetEnv},
+      {"type",           bytecode::ByteCodeInstruction::GetType},
+      {"int",            bytecode::ByteCodeInstruction::CastToInt},
+      {"float",          bytecode::ByteCodeInstruction::CastToFloat},
+      {"length",         bytecode::ByteCodeInstruction::Length},
+      {"charAt",         bytecode::ByteCodeInstruction::ChatAt},
+      {"append",         bytecode::ByteCodeInstruction::StringAppend}
     }};
 
   explicit CompilerAstWalker() noexcept
@@ -148,14 +153,8 @@ public:
 
   void popEmissionContext() noexcept {
     auto outer = this->ec->outerContext;
-
     Error::assertWithPanic(outer != nullptr, "popEmissionContext called when outer context is none!");
-
     this->ec = outer;
-  }
-
-  void onEnterIfStatementAstNode(IfStatementAstNode*  /*node*/) noexcept override {
-    ni("onEnterIfStatementAstNode");
   }
 
   void onEnterWhileStatementAstNode(WhileStatementAstNode*  /*node*/) noexcept override {
@@ -175,7 +174,6 @@ public:
 
     if (find == this->ec->breakStatementsForLoops.end()) {
       vec = std::make_shared<std::vector<std::size_t>>();
-
       this->ec->breakStatementsForLoops.insert(std::make_pair(loopIndex, vec));
     } else {
       vec = find->second;
@@ -193,6 +191,19 @@ public:
     this->emit(bytecode::ByteCodeInstruction::JumpIfFalse);
     this->visitStatementAstNode(node->statement.get());
     this->onExitWhileStatementAstNode(node);
+  }
+
+  void visitIfStatementAstNode(IfStatementAstNode* node) noexcept override {
+    this->onEnterIfStatementAstNode(node);
+    this->visitExpressionAstNode(node->expression.get());
+    this->ec->ifConditionEvalJumpIndices.push_back(this->ec->byteCode.size());
+    this->emit(bytecode::ByteCodeInstruction::JumpIfFalse);
+    this->visitStatementAstNode(node->ifStatement.get());
+    if (node->elseStatement) {
+      this->ec->elseStatementStartIndex.push_back(this->ec->byteCode.size());
+      this->visitStatementAstNode(node->elseStatement->get());
+    }
+    this->onExitIfStatementAstNode(node);
   }
 
   void onEnterBlockStatementAstNode(BlockStatementAstNode*  /*node*/) noexcept override {
@@ -229,6 +240,11 @@ public:
       }
       case TokenType::StringLiteral: {
         auto str = node->token->value.substr(1, node->token->value.length() - 2);
+        for (std::size_t i = 0; i < str.length(); i++) {
+          if (str.at(i) == '\\' && i < str.length() - 1 && str.at(i + 1) == 'n') {
+            str = str.replace(i, 2, "\n");
+          }
+        }
         std::size_t index = this->indexOfConstant(str, this->stringConstants, this->stringConstantsLookup);
         this->emit(bytecode::ByteCodeInstruction::LoadStringConstant, index);
         return;
@@ -276,8 +292,27 @@ public:
     this->emit(bytecode::ByteCodeInstruction::SetLocal, index);
   }
 
-  void onExitIfStatementAstNode(IfStatementAstNode*  /*node*/) noexcept override {
-    ni("onExitIfStatement()");
+  void onExitIfStatementAstNode(IfStatementAstNode* node) noexcept override {
+    Error::assertWithPanic(this->ec->ifConditionEvalJumpIndices.size() > 0,
+      "onExitIfStatementAstNode encountered if exit statement but ifConditionEvalJumpIndices is empty");
+
+    std::size_t ifEvalIndex = this->ec->ifConditionEvalJumpIndices.at(this->ec->ifConditionEvalJumpIndices.size() - 1);
+    this->ec->ifConditionEvalJumpIndices.pop_back();
+
+    std::size_t jumpIndex;
+
+    if (node->elseStatement) {
+      Error::assertWithPanic(this->ec->elseStatementStartIndex.size() > 0,
+        "onExitIfStatementAstNode encountered if exit statement with valid ekse but elseStatementStartIndex is empty");
+
+      jumpIndex = this->ec->elseStatementStartIndex.at(this->ec->elseStatementStartIndex.size() - 1);
+      this->ec->elseStatementStartIndex.pop_back();
+
+    } else {
+      jumpIndex = this->ec->byteCode.size();
+    }
+
+    this->ec->UpdateParameterAtIndex(ifEvalIndex, jumpIndex);
   }
 
   void onExitWhileStatementAstNode(WhileStatementAstNode*  /*node*/) noexcept override {
@@ -302,17 +337,11 @@ public:
 
     std::size_t loopEnd = this->ec->byteCode.size();
 
-    // TODO: fix this horribleness
-    bytecode::ByteCode & bc = this->ec->byteCode.at(loopJumpIfFalseIndex);
-    std::size_t* parameterPtr = const_cast<std::size_t*>(&bc.parameter);
-    *parameterPtr = loopEnd;
+    this->ec->UpdateParameterAtIndex(loopJumpIfFalseIndex, loopEnd);
 
     if (vec != nullptr) {
-      for (const auto index : *vec) {
-        // TODO: fix this horribleness
-        bytecode::ByteCode & bc = this->ec->byteCode.at(index);
-        std::size_t* parameterPtr = const_cast<std::size_t*>(&bc.parameter);
-        *parameterPtr = loopEnd;
+      for (const auto breakIndex : *vec) {
+        this->ec->UpdateParameterAtIndex(breakIndex, loopEnd);
       }
     }
 
