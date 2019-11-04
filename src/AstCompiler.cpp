@@ -376,6 +376,9 @@ public:
 
   void onExitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode* node) noexcept override {
 
+    this->emit(bytecode::ByteCodeInstruction::LoadUndefinedConstant);
+    this->emit(bytecode::ByteCodeInstruction::Return);
+
     std::size_t fnIndex = this->functions.size();
 
     this->functions.push_back(bytecode::Function{
