@@ -59,8 +59,8 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  std::string fileName = "";
-  std::string failStepString = "";
+  std::string fileName;
+  std::string failStepString;
 
   try {
 
@@ -84,9 +84,6 @@ int main(int argc, char** argv) {
 
     if (actualFailStep != failStep) {
       return 1;
-
-    } else {
-      return 0;
     }
 
   } catch (...) {

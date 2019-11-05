@@ -2,8 +2,8 @@
 
 ./scripts/clean.sh
 
-./scripts/clang-tidy.sh
-
 ./scripts/build.sh
+
+./scripts/clang-tidy.sh
 
 ./build/flang $@
