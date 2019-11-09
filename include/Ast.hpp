@@ -17,6 +17,7 @@ statement
   | return statement
   | assign statment
   | block statement
+  | expression statement
   ;
 
 declare statement
@@ -214,6 +215,18 @@ public:
   : statements{std::move(statements)}
   {}
 };
+
+class ExpressionStatementAstNode : public StatementAstNode {
+public:
+  const std::shared_ptr<ExpressionAstNode> expression;
+
+  explicit ExpressionStatementAstNode(
+    std::shared_ptr<ExpressionAstNode> expression
+  ) noexcept
+  : expression{std::move(expression)}
+  {}
+};
+
 
 class ExpressionAstNode : public AstNode {
 };

@@ -470,6 +470,10 @@ public:
     this->emit(bytecode::ByteCodeInstruction::MakeObj, objectIndex);
   }
 
+  void onExitExpressionStatementAstNode(ExpressionStatementAstNode*) noexcept override {
+    this->emit(bytecode::ByteCodeInstruction::Pop);
+  }
+
 };
 
 std::shared_ptr<bytecode::CompiledFile> compiler::AstCompiler::compile(std::shared_ptr<ScriptAstNode> file) noexcept {

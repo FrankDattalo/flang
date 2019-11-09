@@ -45,6 +45,12 @@ void AstWalker::visitStatementAstNode(StatementAstNode* node) noexcept {
     return;
   }
 
+  auto expr = dynamic_cast<ExpressionStatementAstNode*>(node);
+  if (expr != nullptr) {
+    this->visitExpressionStatementAstNode(expr);
+    return;
+  }
+
   Error::assertWithPanic(false, "visitStatementAstNode called with unexpected node type");
 }
 
@@ -188,4 +194,10 @@ void AstWalker::visitObjectDeclarationExpressionAstNode(ObjectDeclarationExpress
     this->visitExpressionAstNode(kv.second.get());
   }
   this->onExitObjectDeclarationExpressionAstNode(node);
+}
+
+void AstWalker::visitExpressionStatementAstNode(ExpressionStatementAstNode* node) noexcept {
+  this->onEnterExpressionStatementAstNode(node);
+  this->visitExpressionAstNode(node->expression.get());
+  this->onExitExpressionStatementAstNode(node);
 }

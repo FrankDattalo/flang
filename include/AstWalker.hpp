@@ -29,6 +29,7 @@ public:
   virtual void visitBuiltInFunctionInvocationExpressionAstNode(BuiltInFunctionInvocationExpressionAstNode* node) noexcept;
   virtual void visitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode* node) noexcept;
   virtual void visitObjectDeclarationExpressionAstNode(ObjectDeclarationExpressionAstNode* node) noexcept;
+  virtual void visitExpressionStatementAstNode(ExpressionStatementAstNode* node) noexcept;
 
   // enter callbacks
   virtual void onEnterScriptAstNode(ScriptAstNode*  /*node*/) noexcept {}
@@ -45,6 +46,7 @@ public:
   virtual void onEnterBuiltInFunctionInvocationExpressionAstNode(BuiltInFunctionInvocationExpressionAstNode*  /*node*/) noexcept {}
   virtual void onEnterFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode*  /*node*/) noexcept {}
   virtual void onEnterObjectDeclarationExpressionAstNode(ObjectDeclarationExpressionAstNode*  /*node*/) noexcept {}
+  virtual void onEnterExpressionStatementAstNode(ExpressionStatementAstNode*) noexcept {}
 
   // exit callbacks
   virtual void onExitScriptAstNode(ScriptAstNode*  /*node*/) noexcept {}
@@ -61,6 +63,7 @@ public:
   virtual void onExitBuiltInFunctionInvocationExpressionAstNode(BuiltInFunctionInvocationExpressionAstNode*  /*node*/) noexcept {}
   virtual void onExitFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode*  /*node*/) noexcept {}
   virtual void onExitObjectDeclarationExpressionAstNode(ObjectDeclarationExpressionAstNode*  /*node*/) noexcept {}
+  virtual void onExitExpressionStatementAstNode(ExpressionStatementAstNode*) noexcept {}
 };
 
 #endif

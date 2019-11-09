@@ -47,6 +47,7 @@ enum class ByteCodeInstruction {
   ObjectSet, // 3 args
   GetEnv, // 1 arg, returns string
   LoadClosure,
+  Pop,
 };
 
 struct ByteCode {

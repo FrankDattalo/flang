@@ -162,6 +162,8 @@ private:
 
   void GetEnv();
 
+  void Pop();
+
   bool protectDifferentTypes(Variable v1, Variable v2);
 
   void pushUndefined();

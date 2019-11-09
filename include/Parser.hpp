@@ -46,6 +46,9 @@ public:
   const std::optional<std::shared_ptr<BlockStatementAstNode>>
   parseBlockStatement() noexcept;
 
+  const std::optional<std::shared_ptr<ExpressionStatementAstNode>>
+  parseExpressionStatement() noexcept;
+
   const std::optional<std::shared_ptr<ExpressionAstNode>>
   parseExpression() noexcept;
 
@@ -63,6 +66,9 @@ public:
 
   const std::optional<std::shared_ptr<ExpressionAstNode>>
   parseIdentifierOrFunctionInvocationExpression() noexcept;
+
+  const std::optional<std::shared_ptr<StatementAstNode>>
+  parseAssignOrExpressionStatement() noexcept;
 
   const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>>
   parseFunctionInvocationExpression() noexcept;

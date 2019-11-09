@@ -114,6 +114,7 @@ void runtime::VirtualMachine::run() noexcept {
       case bytecode::ByteCodeInstruction::ObjectSet: { this->ObjectSet(); break; }
       case bytecode::ByteCodeInstruction::GetEnv: { this->GetEnv(); break; }
       case bytecode::ByteCodeInstruction::LoadClosure: { this->LoadClosure(); break; }
+      case bytecode::ByteCodeInstruction::Pop: { this->Pop(); break; }
       default: {
         this->panic("Unknown bytecode found in instructions!");
         return;
@@ -978,6 +979,11 @@ void runtime::VirtualMachine::GetEnv() {
   this->advance();
 }
 
+void runtime::VirtualMachine::Pop() {
+  this->popOpStack();
+  this->advance();
+}
+
 bool VirtualMachine::variableEquals(Variable var1, Variable var2) {
   if (var1.type != var2.type) {
     return false;
@@ -1172,6 +1178,7 @@ std::string runtime::VirtualMachine::byteCodeToString(bytecode::ByteCode bc, boo
     case bytecode::ByteCodeInstruction::ObjectSet: return "ObjectSet";
     case bytecode::ByteCodeInstruction::GetEnv: return "GetEnv";
     case bytecode::ByteCodeInstruction::LoadClosure: return "LoadClosure" PARAM;
+    case bytecode::ByteCodeInstruction::Pop: return "Pop";
     default: {
       if (panic) {
         this->panic("Unkown bytecode instruction encountered");

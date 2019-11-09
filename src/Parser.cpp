@@ -66,7 +66,7 @@ Parser::parseStatement() noexcept {
       this->skipWhiteSpace();
       return s;
     default:
-      s = this->parseAssignStatement();
+      s = this->parseAssignOrExpressionStatement();
       this->skipWhiteSpace();
       return s;
   }
@@ -270,6 +270,38 @@ Parser::parseBlockStatement() noexcept {
   if (error) { return std::nullopt; }
 
   return std::make_shared<BlockStatementAstNode>(statements);
+}
+
+const std::optional<std::shared_ptr<ExpressionStatementAstNode>>
+Parser::parseExpressionStatement() noexcept {
+  auto expr = this->parseExpression();
+  bool error = false;
+  this->expect(TokenType::SemiColon, error, "Expected a semicolon following expression statement");
+
+  if (error || !expr) {
+    return std::nullopt;
+  }
+
+  return std::make_shared<ExpressionStatementAstNode>(expr.value());
+}
+
+const std::optional<std::shared_ptr<StatementAstNode>>
+Parser::parseAssignOrExpressionStatement() noexcept {
+
+  if (this->tokenBuffer->currentToken()->tokenType != TokenType::Identifier) {
+    return this->parseExpressionStatement();
+  }
+
+  std::size_t lookAhead = 1;
+  while (this->tokenBuffer->tokenAt(lookAhead)->tokenType == TokenType::WhiteSpace) {
+    lookAhead++;
+  }
+
+  if (this->tokenBuffer->tokenAt(lookAhead)->tokenType == TokenType::Assign) {
+    return this->parseAssignStatement();
+  }
+
+  return this->parseExpressionStatement();
 }
 
 const std::optional<std::shared_ptr<ExpressionAstNode>>
