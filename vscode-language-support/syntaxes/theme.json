@@ -1,0 +1,62 @@
+{
+  "scopeName": "source.flang",
+  "patterns": [
+    { "include": "#comment" }
+    ,{ "include": "#literal" }
+    ,{ "include": "#keywordControl" }
+    ,{ "include": "#keywordNonControl" }
+    ,{ "include": "#builtInFunction" }
+    ,{ "include": "#identifier" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "#.*$",
+      "name": "comment.line.number-sign.flang"
+    },
+    "literal": {
+      "patterns": [
+        { "include": "#integer" },
+        { "include": "#float" },
+        { "include": "#undefined" },
+        { "include": "#string" },
+        { "include": "#boolean" }
+      ]
+    },
+    "integer": {
+      "match": "(0|[1-9][0-9]*)",
+      "name": "constant.language.numeric.flang"
+    },
+    "float": {
+      "match": "(0|[1-9][0-9]*)\\.[0-9]+",
+      "name": "constant.language.numeric.flang"
+    },
+    "undefined": {
+      "match": "undefined",
+      "name": "constant.language.flang"
+    },
+    "string": {
+      "match": "\"[^\n\"]*\"",
+      "name": "string.quoted.double.flang"
+    },
+    "boolean": {
+      "match": "\\b(true|false)\\b",
+      "name": "constant.language.flang"
+    },
+    "identifier": {
+      "match": "[_a-zA-Z][_a-zA-Z0-9]*",
+      "name": "variable.other.flang"
+    },
+    "keywordControl": {
+      "match": "\\b(if|else|while|break|return)\\b",
+      "name": "keyword.control.flang"
+    },
+    "keywordNonControl": {
+      "match": "\\b(function|var)\\b",
+      "name": "keyword.other.flang"
+    },
+    "builtInFunction": {
+      "match": "\\b(add|subtract|multiply|divide|equal|notEqual|not|and|or|greater|less|greaterOrEqual|lessOrEqual|get|set|read|print|env|type|int|float|length|charAt|append)\\b",
+      "name": "keyword.operator.flang"
+    }
+  }
+}

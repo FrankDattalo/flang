@@ -1,3 +1,9 @@
+
+#
+# Hello!
+# This is some fLang source code with syntax highlighting!
+#
+
 var tag = function(name) {
   return function(inner) {
     print("<");
