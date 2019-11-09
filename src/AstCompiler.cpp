@@ -9,13 +9,19 @@ public:
   std::size_t localScopeIndex;
 };
 
+class VariableDeclaration {
+public:
+  std::string value;
+  bool isFullyBound;
+};
+
 class EmissionContext {
 public:
   // TODO: make this faster? O(n) to find the proper variable
-  std::vector<std::string> variables;
+  std::vector<VariableDeclaration> variables;
   std::vector<ClosureContext> closures;
-  std::size_t firstFreeVariablesIndex{0};
-  std::vector<std::size_t> scopeStartIndex{0};
+  std::size_t firstFreeVariablesIndex = 0;
+  std::vector<std::size_t> scopeStartIndex;
   std::vector<bytecode::ByteCode> byteCode;
   std::shared_ptr<EmissionContext> outerContext;
 
@@ -32,10 +38,14 @@ public:
   : outerContext{std::move(outerContext)}
   {}
 
- bool GetDeclarationIndex(const std::string & var, std::size_t& index) {
+ bool GetDeclarationIndex(const std::string & var, std::size_t& index, bool considerPartiallyBound) {
 
     for (std::size_t i = this->firstFreeVariablesIndex; i-- > 0;) {
-      if (variables.at(i) == var) {
+      if (!variables.at(i).isFullyBound && !considerPartiallyBound) {
+        continue;
+      }
+
+      if (variables.at(i).value == var) {
         index = i;
         return true;
       }
@@ -45,12 +55,20 @@ public:
   }
 
   void Declare(const std::string & var) {
+    VariableDeclaration vd;
+    vd.value = var;
+    vd.isFullyBound = false;
+
     if (this->firstFreeVariablesIndex < this->variables.size()) {
-      this->variables.at(this->firstFreeVariablesIndex) = var;
+      this->variables.at(this->firstFreeVariablesIndex) = vd;
     } else {
-      this->variables.push_back(var);
+      this->variables.push_back(vd);
     }
     this->firstFreeVariablesIndex++;
+  }
+
+  void FullyBind(std::size_t index) {
+    this->variables.at(index).isFullyBound = true;
   }
 
   void PushScope() {
@@ -267,7 +285,7 @@ public:
 
   void loadVariable(const std::string& str) noexcept {
     std::size_t index;
-    if (this->ec->GetDeclarationIndex(str, index)) {
+    if (this->ec->GetDeclarationIndex(str, index, false)) {
       // it's a local
       this->emit(bytecode::ByteCodeInstruction::LoadLocal, index);
     } else {
@@ -287,7 +305,7 @@ public:
       while (true) {
         Error::assertWithPanic(ec != nullptr, "Emission context was nullptr when we expected one in resolving closure");
         std::size_t index;
-        if (ec->GetDeclarationIndex(str, index)) {
+        if (ec->GetDeclarationIndex(str, index, true)) {
           ClosureContext cc;
           cc.value = str;
           cc.outerScopeCount = localOffsets;
@@ -316,6 +334,8 @@ public:
 
     for (const auto& var : node->parameters) {
       ec->Declare(var->value);
+      // immediately fully bind all parameters as are never half-declared
+      ec->FullyBind(ec->variables.size() - 1);
     }
 
     this->ec = ec;
@@ -326,17 +346,21 @@ public:
    this->emit(bytecode::ByteCodeInstruction::Halt);
   }
 
-  void onExitDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept override {
+  void onEnterDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept override {
     this->ec->Declare(node->identifier->value);
+  }
+
+  void onExitDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept override {
     std::size_t index;
-    bool find = this->ec->GetDeclarationIndex(node->identifier->value, index);
+    bool find = this->ec->GetDeclarationIndex(node->identifier->value, index, true);
     Error::assertWithPanic(find, "Could not find local declaration for declare statement");
+    this->ec->FullyBind(index);
     this->emit(bytecode::ByteCodeInstruction::SetLocal, index);
   }
 
   void onExitAssignStatementAstNode(AssignStatementAstNode* node) noexcept override {
     std::size_t index;
-    bool find = this->ec->GetDeclarationIndex(node->identifier->value, index);
+    bool find = this->ec->GetDeclarationIndex(node->identifier->value, index, false);
     Error::assertWithPanic(find, "Could not find local declaration for assign statement");
     this->emit(bytecode::ByteCodeInstruction::SetLocal, index);
   }

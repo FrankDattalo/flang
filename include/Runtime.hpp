@@ -10,6 +10,8 @@ struct StackFrame;
 
 struct Variable;
 
+struct ClosureContext;
+
 struct Function;
 
 struct Object;
@@ -196,7 +198,9 @@ private:
 
   void advance();
 
-  runtime::Variable loadClosure(const bytecode::ClosureContext& closure);
+  runtime::ClosureContext loadClosure(const bytecode::ClosureContext& closure);
+
+  runtime::Variable loadClosureValue(const runtime::Function* fn, std::size_t index);
 };
 
 }

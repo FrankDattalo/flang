@@ -14,8 +14,13 @@ enum class VariableType {
 
 struct Object;
 
+struct ClosureContext {
+  const StackFrame* stackFrame;
+  std::size_t scopeIndex;
+};
+
 struct Function {
-  std::vector<runtime::Variable> captures;
+  std::vector<runtime::ClosureContext> captures;
   std::shared_ptr<StackFrame> scopeOuter;
   const bytecode::Function* fn;
 };
@@ -394,20 +399,9 @@ void runtime::VirtualMachine::LoadClosure() {
     return;
   }
 
-  auto stackFrame = this->stackFrame;
-
-  auto closures = &stackFrame->function->captures;
-
-  auto index = this->getByteCodeParameter();
-
-  if (index >= closures->size()) {
-    this->panic("Index out of bounds in LoadClosure");
-    return;
-  }
-
-  Variable closure = closures->at(index);
-
-  this->pushOpStack(closure);
+  this->pushOpStack(
+    this->loadClosureValue(this->stackFrame->function, this->getByteCodeParameter())
+  );
 
   this->advance();
 }
@@ -436,7 +430,23 @@ void runtime::VirtualMachine::SetLocal() {
   this->advance();
 }
 
-runtime::Variable runtime::VirtualMachine::loadClosure(const bytecode::ClosureContext& closure) {
+runtime::Variable runtime::VirtualMachine::loadClosureValue(const runtime::Function* fn, std::size_t index) {
+  auto& closures = fn->captures;
+
+  if (index >= closures.size()) {
+    this->panic("Index out of bounds in loadClosureValue");
+  }
+
+  const auto& closure = closures.at(index);
+
+  if (closure.scopeIndex >= closure.stackFrame->locals.size()) {
+    this->panic("Scope index >= closure.stackFrame->locals.size()");
+  }
+
+  return closure.stackFrame->locals.at(closure.scopeIndex);
+}
+
+runtime::ClosureContext runtime::VirtualMachine::loadClosure(const bytecode::ClosureContext& closure) {
   // we start at offset of 1 because those offsets are determined from within the function scope
   // are we are not technically within the function scope also offset of zero means local
   auto scope = this->stackFrame;
@@ -452,7 +462,10 @@ runtime::Variable runtime::VirtualMachine::loadClosure(const bytecode::ClosureCo
     this->panic("closure.localIndex out of bounds for scope when trying to find closure value");
   }
 
-  return scope->locals.at(closure.localIndex);
+  runtime::ClosureContext cc;
+  cc.stackFrame = scope.get();
+  cc.scopeIndex = closure.localIndex;
+  return cc;
 }
 
 void runtime::VirtualMachine::MakeFn() {
@@ -1231,7 +1244,7 @@ void runtime::VirtualMachine::print() {
     }
     this->out << "| | Captures:\n";
     for (std::size_t i = 0; i < stackFrame->function->captures.size(); i++) {
-      this->out << "| |   |" << i << "| " << this->variableToString(stackFrame->function->captures.at(i), false) << '\n';
+      this->out << "| |   |" << i << "| " << this->variableToString(this->loadClosureValue(stackFrame->function, i), false) << '\n';
     }
     this->out << "| | Op Stack:\n";
     for (std::size_t i = 0; i < stackFrame->opStack.size(); i++) {

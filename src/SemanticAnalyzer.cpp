@@ -1,13 +1,19 @@
 #include "SemanticAnalyzer.hpp"
 
+class VariableDefinition {
+public:
+  std::shared_ptr<Token> token;
+  bool isFullyBound;
+};
+
 class Scope {
 public:
-  const std::optional<std::shared_ptr<Scope>> outerScope;
-  std::unordered_map<std::string, std::shared_ptr<Token>> localScope;
+  std::shared_ptr<Scope> outerScope;
+  std::unordered_map<std::string, VariableDefinition> localScope;
   bool outerScopeCrossesFunctionBarrier;
 
   explicit Scope() noexcept
-  : outerScope{std::nullopt}
+  : outerScope{nullptr}
   , outerScopeCrossesFunctionBarrier{true}
   {}
 
@@ -19,66 +25,76 @@ public:
   ~Scope() = default;
 
   bool hasOuterScope() const {
-    return this->outerScope.has_value();
+    return this->outerScope != nullptr;
   }
 
-  void define(const std::string & variableName, std::shared_ptr<Token> token) {
-    this->localScope.insert(std::make_pair(variableName, token));
+  void define(const std::string & variableName, std::shared_ptr<Token> token, bool isFullyBound) {
+    auto find = this->localScope.find(variableName);
+
+    if (find == this->localScope.end()) {
+      VariableDefinition vd;
+      vd.isFullyBound = isFullyBound;
+      vd.token = token;
+      this->localScope.insert(std::make_pair(variableName, vd));
+
+    } else {
+      this->localScope.at(variableName).isFullyBound = true;
+      this->localScope.at(variableName).token = token;
+    }
   }
 
-  std::optional<std::shared_ptr<Token>> findLocally(const std::string & variableName) {
+  std::optional<VariableDefinition> findLocally(const std::string & variableName, bool considerPartiallyBound) {
+
     auto find = this->localScope.find(variableName);
 
     if (find == this->localScope.end()) {
       return std::nullopt;
     }
 
-    return find->second;
+    VariableDefinition vd = find->second;
+
+    if (!vd.isFullyBound) {
+      if (considerPartiallyBound) {
+        return vd;
+      }
+
+      return std::nullopt;
+    }
+
+    return vd;
   }
 
-  std::optional<std::shared_ptr<Token>> findWithinFunction(const std::string & variableName) {
+  std::optional<VariableDefinition> find(const std::string & variableName, bool canCrossFunctionBarrier) {
 
     Scope* scopeToSearch = this;
 
-    while (true) {
+    bool considerPartiallyBound = false;
 
-      auto find = scopeToSearch->findLocally(variableName);
+    while (true) {
+      auto find = scopeToSearch->findLocally(variableName, considerPartiallyBound);
 
       if (find) {
         return find;
       }
 
-      if (scopeToSearch->outerScope && !scopeToSearch->outerScopeCrossesFunctionBarrier) {
-        scopeToSearch = scopeToSearch->outerScope.value().get();
+      if (scopeToSearch->outerScope != nullptr) {
+        if (scopeToSearch->outerScopeCrossesFunctionBarrier) {
+          considerPartiallyBound = true;
+        }
 
+        if (!canCrossFunctionBarrier && scopeToSearch->outerScopeCrossesFunctionBarrier) {
+          return std::nullopt;
+
+        } else {
+          scopeToSearch = scopeToSearch->outerScope.get();
+        }
       } else {
         return std::nullopt;
       }
     }
   }
 
-  std::optional<std::shared_ptr<Token>> find(const std::string & variableName) {
-
-    Scope* scopeToSearch = this;
-
-    while (true) {
-
-      auto find = scopeToSearch->findLocally(variableName);
-
-      if (find) {
-        return find;
-      }
-
-      if (scopeToSearch->outerScope) {
-        scopeToSearch = scopeToSearch->outerScope.value().get();
-
-      } else {
-        return std::nullopt;
-      }
-    }
-  }
-
-  std::optional<std::shared_ptr<Scope>> getOuterScope() {
+  std::shared_ptr<Scope> getOuterScope() {
     return this->outerScope;
   }
 };
@@ -139,15 +155,18 @@ public:
 
   // validate that the variable we are delcaring has not already been declared elsewhere
   void onEnterDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept override {
-    auto originalDeclare = this->currentScope->findLocally(node->identifier->value);
+    auto originalDeclare = this->currentScope->findLocally(node->identifier->value, false);
     if (originalDeclare != std::nullopt) {
       this->reportError(node->identifier, "Duplicate identifier found within same scope.");
+    } else {
+      // paritally define (late bound available) variable for current scope
+      this->currentScope->define(node->identifier->value, node->identifier, false);
     }
   }
 
   // validate that the variable we are assign has been declared within the current scope
   void onEnterAssignStatementAstNode(AssignStatementAstNode* node) noexcept override {
-    auto originalDeclare = this->currentScope->findWithinFunction(node->identifier->value);
+    auto originalDeclare = this->currentScope->find(node->identifier->value, false);
     if (originalDeclare == std::nullopt) {
       this->reportError(node->identifier, "No local declaration found for identifier.");
     }
@@ -172,13 +191,13 @@ public:
     this->currentScope = newScope;
 
     for (auto& item : itemsToDeclare) {
-      auto find = this->currentScope->findLocally(item->value);
+      auto find = this->currentScope->findLocally(item->value, false);
 
       if (find) {
         this->reportError(item, "Duplicate identifier found within the same scope.");
 
       } else {
-        this->currentScope->define(item->value, item);
+        this->currentScope->define(item->value, item, true);
       }
     }
   }
@@ -195,14 +214,14 @@ public:
 
   // validate that identifier is defined
   void onEnterIdentifierExpressionAstNode(IdentifierExpressionAstNode* node) noexcept override {
-    if (!this->currentScope->find(node->token->value)) {
+    if (!this->currentScope->find(node->token->value, true)) {
       this->reportError(node->token, "Undefined reference in identifier evaluation.");
     }
   }
 
   // validate that identifier is defined
   void onEnterFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode*  node) noexcept override {
-    if (!this->currentScope->find(node->identifier->value)) {
+    if (!this->currentScope->find(node->identifier->value, true)) {
       this->reportError(node->identifier, "Undefined reference in function invocation.");
     }
   }
@@ -239,19 +258,15 @@ public:
 
   // define the variable within the current scope
   void onExitDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept override {
-    auto find = this->currentScope->findLocally(node->identifier->value);
-
-    if (!find) {
-      this->currentScope->define(node->identifier->value, node->identifier);
-    }
+    this->currentScope->define(node->identifier->value, node->identifier, true);
   }
 
   void popScope() noexcept {
     auto outer = this->currentScope->getOuterScope();
 
-    Error::assertWithPanic(outer != std::nullopt, "No outer scope found.");
+    Error::assertWithPanic(outer != nullptr, "No outer scope found.");
 
-    this->currentScope = outer.value();
+    this->currentScope = outer;
   }
 
   // pop scope
