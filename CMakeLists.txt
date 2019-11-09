@@ -65,6 +65,7 @@ add_test(pass12 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/pass12.f none)
 add_test(pass13 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/pass13.f none)
 add_test(pass15 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/pass15.f none)
 add_test(pass16 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/pass16.f none)
+add_test(pass16 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/pass17.f none)
 
 add_test(fail_semantic1 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic1.f semantic_analysis)
 add_test(fail_semantic2 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic2.f semantic_analysis)
@@ -81,7 +82,6 @@ add_test(fail_semantic12 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_se
 add_test(fail_semantic13 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic13.f semantic_analysis)
 add_test(fail_semantic15 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic15.f semantic_analysis)
 add_test(fail_semantic16 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic16.f semantic_analysis)
-add_test(fail_semantic17 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic17.f semantic_analysis)
 add_test(fail_semantic18 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_semantic18.f semantic_analysis)
 
 add_test(fail_parsing1 flang_frontend_tester ${FRONTEND_TEST_DATA_DIR}/fail_parsing1.f parsing)

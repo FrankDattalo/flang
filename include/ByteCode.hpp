@@ -46,6 +46,7 @@ enum class ByteCodeInstruction {
   ObjectGet, // 2 args
   ObjectSet, // 3 args
   GetEnv, // 1 arg, returns string
+  LoadClosure,
 };
 
 struct ByteCode {
@@ -61,21 +62,34 @@ struct ByteCode {
   {}
 };
 
+struct ClosureContext {
+  const std::size_t scopeOffsets;
+  const std::size_t localIndex;
+
+  explicit ClosureContext(
+    std::size_t scopeOffsets,
+    std::size_t localIndex
+  ) noexcept
+  : scopeOffsets{scopeOffsets}
+  , localIndex{localIndex}
+  {}
+};
+
 struct Function {
   const std::size_t argumentCount;
   const std::size_t localsCount;
-  const std::size_t capturesCount;
+  const std::vector<ClosureContext> closures;
   const std::vector<ByteCode> byteCode;
 
   explicit Function(
     std::size_t argumentCount,
     std::size_t localsCount,
-    std::size_t capturesCount,
+    std::vector<ClosureContext> closures,
     std::vector<ByteCode> byteCode
   ) noexcept
   : argumentCount{argumentCount}
   , localsCount{localsCount}
-  , capturesCount{capturesCount}
+  , closures{std::move(closures)}
   , byteCode{std::move(byteCode)}
   {}
 };

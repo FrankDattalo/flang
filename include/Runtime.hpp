@@ -24,7 +24,7 @@ private:
 
 public:
 
-  explicit Heap(runtime::VirtualMachine* /*vm*/) noexcept;
+  explicit Heap(runtime::VirtualMachine*) noexcept;
 
   virtual ~Heap() noexcept;
 
@@ -73,7 +73,7 @@ public:
   void run() noexcept;
 
 private:
-  void pushStackFrame(const bytecode::Function* function);
+  void pushStackFrame(const runtime::Function* function);
 
   void popStackFrame();
 
@@ -113,6 +113,8 @@ private:
   void LoadBooleanFalseConstant();
 
   void LoadLocal();
+
+  void LoadClosure();
 
   void SetLocal();
 
@@ -191,6 +193,8 @@ private:
   void print();
 
   void advance();
+
+  runtime::Variable loadClosure(const bytecode::ClosureContext& closure);
 };
 
 }

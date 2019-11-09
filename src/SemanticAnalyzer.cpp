@@ -195,14 +195,14 @@ public:
 
   // validate that identifier is defined
   void onEnterIdentifierExpressionAstNode(IdentifierExpressionAstNode* node) noexcept override {
-    if (!this->currentScope->findWithinFunction(node->token->value)) {
+    if (!this->currentScope->find(node->token->value)) {
       this->reportError(node->token, "Undefined reference in identifier evaluation.");
     }
   }
 
   // validate that identifier is defined
   void onEnterFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode*  node) noexcept override {
-    if (!this->currentScope->findWithinFunction(node->identifier->value)) {
+    if (!this->currentScope->find(node->identifier->value)) {
       this->reportError(node->identifier, "Undefined reference in function invocation.");
     }
   }

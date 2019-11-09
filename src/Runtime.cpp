@@ -16,6 +16,7 @@ struct Object;
 
 struct Function {
   std::vector<runtime::Variable> captures;
+  std::shared_ptr<StackFrame> scopeOuter;
   const bytecode::Function* fn;
 };
 
@@ -39,14 +40,18 @@ struct Object {
 struct StackFrame {
   std::size_t programCounter;
   std::vector<Variable> locals;
-  const std::vector<bytecode::ByteCode>* byteCode;
-  std::optional<std::shared_ptr<StackFrame>> outer;
+  const runtime::Function* function;
+  std::shared_ptr<StackFrame> outer;
   std::vector<Variable> opStack;
 };
 
 void runtime::VirtualMachine::run() noexcept {
 
-  this->pushStackFrame(&this->file->entrypoint);
+  runtime::Function* fn = this->heap.NewFunction();
+  fn->captures.clear();
+  fn->scopeOuter = nullptr;
+  fn->fn = &this->file->entrypoint;
+  this->pushStackFrame(fn);
 
   this->heap.StartGc();
 
@@ -60,12 +65,12 @@ void runtime::VirtualMachine::run() noexcept {
       std::getline(std::cin, ignore);
     }
 
-    if (this->stackFrame->programCounter >= this->stackFrame->byteCode->size()) {
+    if (this->stackFrame->programCounter >= this->stackFrame->function->fn->byteCode.size()) {
       this->panic("Program counter overran bytecode!");
       return;
     }
 
-    auto instruction = this->stackFrame->byteCode->at(this->stackFrame->programCounter).instruction;
+    auto instruction = this->stackFrame->function->fn->byteCode.at(this->stackFrame->programCounter).instruction;
 
     switch (instruction) {
       case bytecode::ByteCodeInstruction::Halt: { this->heap.EndGc(); return; }
@@ -108,6 +113,7 @@ void runtime::VirtualMachine::run() noexcept {
       case bytecode::ByteCodeInstruction::ObjectGet: { this->ObjectGet(); break; }
       case bytecode::ByteCodeInstruction::ObjectSet: { this->ObjectSet(); break; }
       case bytecode::ByteCodeInstruction::GetEnv: { this->GetEnv(); break; }
+      case bytecode::ByteCodeInstruction::LoadClosure: { this->LoadClosure(); break; }
       default: {
         this->panic("Unknown bytecode found in instructions!");
         return;
@@ -130,36 +136,26 @@ void runtime::VirtualMachine::popStackFrame() {
 
   auto outer = currentFrame->outer;
 
-  if (outer == std::nullopt) {
+  if (outer == nullptr) {
     this->panic("No outer stack frame found!");
     return;
   }
 
-  auto outerValue = outer.value();
-
-  this->stackFrame = outerValue;
+  this->stackFrame = outer;
 }
 
-void runtime::VirtualMachine::pushStackFrame(const bytecode::Function* function) {
-  auto currentFrame = this->stackFrame;
-
-  std::optional<std::shared_ptr<StackFrame>> wrappedFrame = std::nullopt;
-
-  if (currentFrame != nullptr) {
-    wrappedFrame = currentFrame;
-  }
-
+void runtime::VirtualMachine::pushStackFrame(const runtime::Function* function) {
   auto newFrame = std::make_shared<StackFrame>();
-  newFrame->byteCode = &function->byteCode;
 
-  for (std::size_t i = 0; i < function->localsCount + function->capturesCount; i++) {
+  for (std::size_t i = 0; i < function->fn->localsCount; i++) {
     Variable undefined{};
     undefined.type = VariableType::Undefined;
     newFrame->locals.push_back(undefined);
   }
 
-  newFrame->outer = wrappedFrame;
+  newFrame->outer = this->stackFrame;
   newFrame->programCounter = 0;
+  newFrame->function = function;
 
   this->stackFrame = newFrame;
 }
@@ -391,6 +387,30 @@ void runtime::VirtualMachine::LoadLocal() {
   this->advance();
 }
 
+void runtime::VirtualMachine::LoadClosure() {
+  if (this->stackFrame == nullptr) {
+    this->panic("No stack frame found in LoadClosure");
+    return;
+  }
+
+  auto stackFrame = this->stackFrame;
+
+  auto closures = &stackFrame->function->captures;
+
+  auto index = this->getByteCodeParameter();
+
+  if (index >= closures->size()) {
+    this->panic("Index out of bounds in LoadClosure");
+    return;
+  }
+
+  Variable closure = closures->at(index);
+
+  this->pushOpStack(closure);
+
+  this->advance();
+}
+
 void runtime::VirtualMachine::SetLocal() {
   if (this->stackFrame == nullptr) {
     this->panic("No stack frame found in SetLocal");
@@ -415,6 +435,25 @@ void runtime::VirtualMachine::SetLocal() {
   this->advance();
 }
 
+runtime::Variable runtime::VirtualMachine::loadClosure(const bytecode::ClosureContext& closure) {
+  // we start at offset of 1 because those offsets are determined from within the function scope
+  // are we are not technically within the function scope also offset of zero means local
+  auto scope = this->stackFrame;
+  for (std::size_t i = 1; i < closure.scopeOffsets; i++) {
+    auto outer = scope->function->scopeOuter;
+    if (outer == nullptr) {
+      this->panic("No outer scope found for closure");
+    }
+    scope = outer;
+  }
+
+  if (closure.localIndex >= scope->locals.size()) {
+    this->panic("closure.localIndex out of bounds for scope when trying to find closure value");
+  }
+
+  return scope->locals.at(closure.localIndex);
+}
+
 void runtime::VirtualMachine::MakeFn() {
   std::size_t index = this->getByteCodeParameter();
 
@@ -423,20 +462,15 @@ void runtime::VirtualMachine::MakeFn() {
     return;
   }
 
-  auto fnPrototype = &this->file->functions.at(index);
   runtime::Function* fn = this->heap.NewFunction();
-
-  fn->fn = fnPrototype;
+  fn->fn = &this->file->functions.at(index);
   fn->captures.clear();
-  fn->captures.resize(fnPrototype->capturesCount);
 
-  for (
-    std::size_t captures = 0, index = fnPrototype->capturesCount - 1;
-    captures < fnPrototype->capturesCount;
-    captures++, index--
-  ) {
-    fn->captures.at(index) = this->popOpStack();
+  for (const auto& closure : fn->fn->closures) {
+    fn->captures.push_back(this->loadClosure(closure));
   }
+
+  fn->scopeOuter = this->stackFrame;
 
   this->pushFunction(fn);
 
@@ -480,21 +514,14 @@ void runtime::VirtualMachine::Invoke() {
     return;
   }
 
-  this->pushStackFrame(top.functionValue->fn);
-
-  std::size_t stackFrameLocalIndex = 0;
-
-  for (const auto var : top.functionValue->captures) {
-    this->stackFrame->locals.at(stackFrameLocalIndex) = var;
-    stackFrameLocalIndex++;
-  }
+  this->pushStackFrame(top.functionValue);
 
   for (
-    std::size_t i = args.size();
+    std::size_t stackFrameLocalIndex = 0, i = args.size();
     i-- > 0;
+    stackFrameLocalIndex++
   ) {
     this->stackFrame->locals.at(stackFrameLocalIndex) = args.at(i);
-    stackFrameLocalIndex++;
   }
 }
 
@@ -1087,7 +1114,7 @@ void runtime::VirtualMachine::pushObject(runtime::Object* obj) {
 }
 
 std::size_t runtime::VirtualMachine::getByteCodeParameter() {
-  return this->stackFrame->byteCode->at(this->stackFrame->programCounter).parameter;
+  return this->stackFrame->function->fn->byteCode.at(this->stackFrame->programCounter).parameter;
 }
 
 bool runtime::VirtualMachine::protectDifferentTypes(Variable v1, Variable v2) {
@@ -1144,6 +1171,7 @@ std::string runtime::VirtualMachine::byteCodeToString(bytecode::ByteCode bc, boo
     case bytecode::ByteCodeInstruction::ObjectGet: return "ObjectGet";
     case bytecode::ByteCodeInstruction::ObjectSet: return "ObjectSet";
     case bytecode::ByteCodeInstruction::GetEnv: return "GetEnv";
+    case bytecode::ByteCodeInstruction::LoadClosure: return "LoadClosure" PARAM;
     default: {
       if (panic) {
         this->panic("Unkown bytecode instruction encountered");
@@ -1169,7 +1197,10 @@ void printConstantArray(std::ostream & out, const std::vector<T> & vec) {
 void runtime::VirtualMachine::printFunction(const bytecode::Function* fn) {
   this->out << "| | Argument Count: " << fn->argumentCount << '\n';
   this->out << "| | Local Count: " << fn->localsCount << '\n';
-  this->out << "| | Capture Count: " << fn->capturesCount << '\n';
+  this->out << "| | Capture Contexts:\n";
+  for (std::size_t i = 0; i < fn->closures.size(); i++) {
+    this->out << "| |   |" << i << "| ClosureContext(scopeOffsets:" << fn->closures.at(i).scopeOffsets << ", LocalIndex: " << fn->closures.at(i).localIndex << ")" << '\n';
+  }
   this->out << "| | Byte Code:\n";
   for (std::size_t i = 0; i < fn->byteCode.size(); i++) {
     this->out << "| |   |" << i << "| " << this->byteCodeToString(fn->byteCode.at(i), false) << '\n';
@@ -1191,21 +1222,21 @@ void runtime::VirtualMachine::print() {
     for (std::size_t i = 0; i < stackFrame->locals.size(); i++) {
       this->out << "| |   |" << i << "| " << this->variableToString(stackFrame->locals.at(i), false) << '\n';
     }
+    this->out << "| | Captures:\n";
+    for (std::size_t i = 0; i < stackFrame->function->captures.size(); i++) {
+      this->out << "| |   |" << i << "| " << this->variableToString(stackFrame->function->captures.at(i), false) << '\n';
+    }
     this->out << "| | Op Stack:\n";
     for (std::size_t i = 0; i < stackFrame->opStack.size(); i++) {
       this->out << "| |   |" << i << "| " << this->variableToString(stackFrame->opStack.at(i), false) << '\n';
     }
     this->out << "| | Byte Code:\n";
-    for (std::size_t i = 0; i < stackFrame->byteCode->size(); i++) {
-      this->out << "| |   |" << i << "| " << this->byteCodeToString(stackFrame->byteCode->at(i), false) << '\n';
+    for (std::size_t i = 0; i < stackFrame->function->fn->byteCode.size(); i++) {
+      this->out << "| |   |" << i << "| " << this->byteCodeToString(stackFrame->function->fn->byteCode.at(i), false) << '\n';
     }
     this->out << "| \\------------------\n";
 
-    if (stackFrame->outer) {
-      stackFrame = stackFrame->outer->get();
-    } else {
-      stackFrame = nullptr;
-    }
+    stackFrame = stackFrame->outer.get();
   }
   this->out << "\\------------------\n";
 

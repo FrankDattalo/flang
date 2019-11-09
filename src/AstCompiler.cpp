@@ -2,10 +2,18 @@
 
 namespace compiler {
 
+class ClosureContext {
+public:
+  std::string value;
+  std::size_t outerScopeCount;
+  std::size_t localScopeIndex;
+};
+
 class EmissionContext {
 public:
   // TODO: make this faster? O(n) to find the proper variable
   std::vector<std::string> variables;
+  std::vector<ClosureContext> closures;
   std::size_t firstFreeVariablesIndex{0};
   std::vector<std::size_t> scopeStartIndex{0};
   std::vector<bytecode::ByteCode> byteCode;
@@ -24,16 +32,16 @@ public:
   : outerContext{std::move(outerContext)}
   {}
 
-  std::size_t GetDeclarationIndex(const std::string & var) {
+ bool GetDeclarationIndex(const std::string & var, std::size_t& index) {
 
     for (std::size_t i = this->firstFreeVariablesIndex; i-- > 0;) {
       if (variables.at(i) == var) {
-        return i;
+        index = i;
+        return true;
       }
     }
 
-    Error::assertWithPanic(false, "GetDeclarationIndex could not find declaration for provided variable");
-    return 0;
+    return false;
   }
 
   void Declare(const std::string & var) {
@@ -119,7 +127,7 @@ public:
 
   std::shared_ptr<bytecode::CompiledFile> ConstructCompiledFile() noexcept {
     return std::make_shared<bytecode::CompiledFile>(
-      bytecode::Function{ 0, this->ec->variables.size(), 0, this->ec->byteCode },
+      bytecode::Function{ 0, this->ec->variables.size(), {}, this->ec->byteCode },
       this->functions,
       this->objects,
       this->intConstants,
@@ -257,14 +265,50 @@ public:
     }
   }
 
+  void loadVariable(const std::string& str) noexcept {
+    std::size_t index;
+    if (this->ec->GetDeclarationIndex(str, index)) {
+      // it's a local
+      this->emit(bytecode::ByteCodeInstruction::LoadLocal, index);
+    } else {
+      // it's a closure
+      std::size_t i = 0;
+      for (const auto& cc : this->ec->closures) {
+        if (cc.value == str) {
+          this->emit(bytecode::ByteCodeInstruction::LoadClosure, i);
+          return;
+        }
+        i++;
+      }
+      // if we've gotten to this point, we need to add a new closure
+      std::size_t localOffsets = 1;
+      auto ec = this->ec->outerContext;
+
+      while (true) {
+        Error::assertWithPanic(ec != nullptr, "Emission context was nullptr when we expected one in resolving closure");
+        std::size_t index;
+        if (ec->GetDeclarationIndex(str, index)) {
+          ClosureContext cc;
+          cc.value = str;
+          cc.outerScopeCount = localOffsets;
+          cc.localScopeIndex = index;
+          std::size_t closureIndex = this->ec->closures.size();
+          this->ec->closures.push_back(cc);
+          this->emit(bytecode::ByteCodeInstruction::LoadClosure, closureIndex);
+          return;
+        }
+        ec = ec->outerContext;
+        localOffsets++;
+      }
+    }
+  }
+
   void onEnterIdentifierExpressionAstNode(IdentifierExpressionAstNode* node) noexcept override {
-    std::size_t index = this->ec->GetDeclarationIndex(node->token->value);
-    this->emit(bytecode::ByteCodeInstruction::LoadLocal, index);
+    this->loadVariable(node->token->value);
   }
 
   void onEnterFunctionInvocationExpressionAstNode(FunctionInvocationExpressionAstNode* node) noexcept override {
-    std::size_t index = this->ec->GetDeclarationIndex(node->identifier->value);
-    this->emit(bytecode::ByteCodeInstruction::LoadLocal, index);
+    this->loadVariable(node->identifier->value);
   }
 
   void onEnterFunctionDeclarationExpressionAstNode(FunctionDeclarationExpressionAstNode* node) noexcept override {
@@ -284,12 +328,16 @@ public:
 
   void onExitDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept override {
     this->ec->Declare(node->identifier->value);
-    std::size_t index = this->ec->GetDeclarationIndex(node->identifier->value);
+    std::size_t index;
+    bool find = this->ec->GetDeclarationIndex(node->identifier->value, index);
+    Error::assertWithPanic(find, "Could not find local declaration for declare statement");
     this->emit(bytecode::ByteCodeInstruction::SetLocal, index);
   }
 
   void onExitAssignStatementAstNode(AssignStatementAstNode* node) noexcept override {
-    std::size_t index = this->ec->GetDeclarationIndex(node->identifier->value);
+    std::size_t index;
+    bool find = this->ec->GetDeclarationIndex(node->identifier->value, index);
+    Error::assertWithPanic(find, "Could not find local declaration for assign statement");
     this->emit(bytecode::ByteCodeInstruction::SetLocal, index);
   }
 
@@ -388,10 +436,16 @@ public:
 
     std::size_t fnIndex = this->functions.size();
 
+    std::vector<bytecode::ClosureContext> closures;
+
+    for (const auto& cc : this->ec->closures) {
+      closures.emplace_back(cc.outerScopeCount, cc.localScopeIndex);
+    }
+
     this->functions.emplace_back(bytecode::Function{
       node->parameters.size(),
       this->ec->variables.size(),
-      0,
+      closures,
       this->ec->byteCode
     });
 
