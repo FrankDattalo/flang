@@ -1,0 +1,82 @@
+/*
+script
+  : statement*
+  ;
+
+statement
+  : declare statement
+  | if else statement
+  | while statement
+  | break statement
+  | return statement
+  | assign statment
+  | block statement
+  | expression statement
+  ;
+
+declare statement
+  : 'var' IDENTIFIER '=' expression ';'
+  ;
+
+if else statement
+  : 'if' '(' expression ')' statement
+  | 'if' '(' expression ')' statement 'else' statement
+  ;
+
+while statement
+  : 'while' '(' expression ')' statement
+  ;
+
+break statement
+  : 'break' ';'
+
+return statement
+  : 'return' ';'
+  | 'return' expression ';'
+  ;
+
+assign statement
+  : IDENTIFIER '=' expression ';'
+  ;
+
+block statement
+  : '{' statement* '}'
+  ;
+
+expression statement
+  : expression ';'
+  ;
+
+expression
+  : INTEGER LITERAL
+  | BOOLEAN LITERAL
+  | STRING LITERAL
+  | UNDEFINED LITERAL
+  | IDENTIFIER
+  | function invocation
+  | function declaration
+  | object declaration
+  | built in function invocation
+  ;
+
+function declaration
+  : 'function' '(' ')' '{' statement* '}'
+  | 'function' '(' IDENTIFIER ( ',' IDENTIFIER )* ')' '{' statement '}'
+  ;
+
+function invocation
+  : IDENTIFIER '(' ')'
+  | IDENTIFIER '(' expression (',' expression )* ')'
+  ;
+
+built in function invocation
+  : BUILT_IN_FUNCTION_NAME '(' ')'
+  | BUILT_IN_FUNCTION_NAME '(' expression (',' expression )* ')'
+  ;
+
+object declaration
+  : '{' '}'
+  | '{' IDENTIFIER ':' expression '}'
+  | '{' IDENTIFIER ':' expression ( ',' IDENTIFIER ':' expression )* '}'
+  ;
+*/

@@ -1,6 +1,13 @@
-#include "lib.hpp"
-#include "Io.hpp"
-#include "Interpreter.hpp"
+#include "utils/lib.hpp"
+#include "frontend/TokenType.hpp"
+#include "frontend/Token.hpp"
+#include "frontend/Tokenizer.hpp"
+#include "frontend/TokenBuffer.hpp"
+#include "frontend/Ast.hpp"
+#include "frontend/AstWalker.hpp"
+
+// #include "Io.hpp"
+// #include "Interpreter.hpp"
 
 void usage(const std::string & msg) {
   std::cerr
@@ -10,24 +17,40 @@ void usage(const std::string & msg) {
   exit(1);
 }
 
-int main(int argc, char** argv) {
+struct MyHandler {
 
-  if (argc != 2) {
-    usage("Unexpected number of arguments.");
-    return 1;
-  }
+  void onEnterIfStatementAstNode(frontend::IfStatementAstNode*) {}
+  void onExitIfStatementAstNode(frontend::IfStatementAstNode*) {}
 
-  std::string filePath{argv[1]};
 
-  auto contents = io::readFileToString(filePath);
+  void onEnterExpressionStatementAstNode(frontend::ExpressionStatementAstNode*) {}
+  void onExitExpressionStatementAstNode(frontend::ExpressionStatementAstNode*) {}
+};
 
-  if (!contents) {
-    usage("Could not open file.");
-    return 1;
-  }
+int main(int, char**) {
 
-  auto interpreter = std::make_shared<interpreter::Interpreter>(std::cout, std::cin);
-  interpreter->Run(contents.value());
+  // if (argc != 2) {
+  //   usage("Unexpected number of arguments.");
+  //   return 1;
+  // }
+
+  // std::string filePath{argv[1]};
+
+  // auto contents = io::readFileToString(filePath);
+
+  // if (!contents) {
+  //   usage("Could not open file.");
+  //   return 1;
+  // }
+
+  // auto interpreter = std::make_shared<interpreter::Interpreter>(std::cout, std::cin);
+  // interpreter->Run(contents.value());
+
+  MyHandler mh;
+
+  frontend::AstWalker<MyHandler*> walker{&mh};
+
+  walker.VisitScriptAstNode(nullptr);
 
   return 0;
 }
