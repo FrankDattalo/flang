@@ -532,7 +532,7 @@ void runtime::VirtualMachine::Invoke() {
 
   for (
     std::size_t stackFrameLocalIndex = 0, i = args.size();
-    i-- > 0;
+    i-- > 0 && stackFrameLocalIndex < this->stackFrame->locals.size();
     stackFrameLocalIndex++
   ) {
     this->stackFrame->locals.at(stackFrameLocalIndex) = args.at(i);
@@ -964,7 +964,7 @@ void runtime::VirtualMachine::ObjectSet() {
   }
 
   first.objectValue->properties.insert(std::make_pair(*second.stringValue, third));
-
+  this->pushUndefined();
   this->advance();
 }
 
