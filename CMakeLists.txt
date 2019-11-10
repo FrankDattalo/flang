@@ -6,17 +6,12 @@ enable_testing()
 
 include_directories(include)
 
+set(CMAKE_VERBOSE_MAKEFILE on)
+
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-Wall \
-  -Wextra \
-  -Wpedantic \
-  -Werror \
-  -pipe \
-  -fexceptions \
-  -fsanitize=address \
-  -fasynchronous-unwind-tables \
-  -fstack-protector-strong"
-)
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror -pipe")
+set(CMAKE_CXX_FLAGS_DEBUG "-fexceptions -fsanitize=address -fasynchronous-unwind-tables -fstack-protector-strong -g -O0")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 set(SOURCES
   ${PROJECT_SOURCE_DIR}/src/AstWalker.cpp
@@ -33,11 +28,6 @@ set(SOURCES
 )
 
 set(TEST_SOURCES)
-
-message("CMAKE_CXX_STANDARD: " ${CMAKE_CXX_STANDARD})
-message("CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
-message("SOURCES: " ${SOURCES})
-message("TEST_SOURCES: " ${TEST_SOURCES})
 
 add_executable(flang
   ${PROJECT_SOURCE_DIR}/src/main.cpp
