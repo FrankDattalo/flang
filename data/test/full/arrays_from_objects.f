@@ -7,15 +7,8 @@ var NewArray = function() {
   var arr = {};
 
   var checkIndex = function(index, callback) {
-    if (notEqual(type(index), "integer")) {
-      println("Expected index type of integer, but was not");
-      return;
-    }
-
-    if (lessOrEqual(length(arr), index)) {
-      println("Index out of bounds for array");
-      return;
-    }
+    if (notEqual(type(index), "integer")) return;
+    if (lessOrEqual(length(arr), index)) return;
 
     return callback();
   };
@@ -44,10 +37,13 @@ var NewArray = function() {
 
       while (less(i, length(arr))) {
         var item = get(arr, append("", i));
+
         ret = append(ret, item);
+
         if (less(i, subtract(length(arr), 1))) {
           ret = append(ret, ", ");
         }
+
         i = add(i, 1);
       }
 
@@ -69,11 +65,31 @@ var invoke = function(object, method, arg1, arg2, arg3, arg4, arg5, arg6, arg7, 
 
 var arr = NewArray();
 
-println(invoke(arr, "Length"));
-println(invoke(arr, "Push", 1));
-println(invoke(arr, "Push", "Dog"));
-println(invoke(arr, "Length"));
-println(invoke(arr, "Get", 1));
-println(invoke(arr, "Set", 2, "Cat"));
-println(invoke(arr, "Push", "Cat"));
+var i = 0;
+
+while (less(i, 10)) {
+  var fn = read();
+
+  if (equal(fn, "Get")) {
+    println(invoke(arr, fn, int(read())));
+
+  } else if (equal(fn, "Set")) {
+    invoke(arr, fn, int(read()), read());
+
+  } else if (equal(fn, "Length")) {
+    invoke(arr, fn);
+
+  } else if (equal(fn, "ToString")) {
+    println(invoke(arr, fn));
+
+  } else if (equal(fn, "Push")) {
+    invoke(arr, fn, read());
+
+  } else {
+    println("Invalid fn!");
+  }
+
+  i = add(i, 1);
+}
+
 println(invoke(arr, "ToString"));
