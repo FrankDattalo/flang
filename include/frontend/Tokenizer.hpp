@@ -20,7 +20,7 @@ public:
 
   std::unique_ptr<Token> NextToken() noexcept;
 
-  void ReportErrorAtToken(std::ostream & out, std::string_view phase, const Token& token, const std::string & message);
+  void ReportErrorAtToken(std::ostream & out, const std::string_view phase, const Token& token, const std::string & message);
 
 private:
   const std::string_view LineForToken(const Token&) noexcept;

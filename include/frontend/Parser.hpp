@@ -1,91 +1,91 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include "lib.hpp"
-#include "Ast.hpp"
-#include "TokenBuffer.hpp"
-#include "Error.hpp"
+#include "utils/lib.hpp"
+#include "utils/error.hpp"
+#include "frontend/Ast.hpp"
+#include "frontend/TokenBuffer.hpp"
+
+namespace frontend {
 
 class Parser {
-public:
-  const std::shared_ptr<TokenBuffer> tokenBuffer;
+private:
+  TokenBuffer tokenBuffer;
   std::ostream & out;
 
-  explicit Parser(
-    std::shared_ptr<TokenBuffer> tokenBuffer,
-    std::ostream & out
-  ) noexcept
-  : tokenBuffer{std::move(tokenBuffer)},
-    out{out}
-  {}
+public:
+  explicit Parser(std::string_view, std::ostream&) noexcept;
 
-  const std::optional<std::shared_ptr<ScriptAstNode>>
-  parseScript() noexcept;
+  const std::unique_ptr<ScriptAstNode>
+  ParseScript() noexcept;
 
-  const std::optional<std::shared_ptr<StatementAstNode>>
-  parseStatement() noexcept;
+  const std::unique_ptr<StatementAstNode>
+  ParseStatement() noexcept;
 
-  const std::optional<std::shared_ptr<IfStatementAstNode>>
-  parseIfStatement() noexcept;
+  const std::unique_ptr<IfStatementAstNode>
+  ParseIfStatement() noexcept;
 
-  const std::optional<std::shared_ptr<DeclareStatementAstNode>>
-  parseDeclareStatement() noexcept;
+  const std::unique_ptr<DeclareStatementAstNode>
+  ParseDeclareStatement() noexcept;
 
-  const std::optional<std::shared_ptr<WhileStatementAstNode>>
-  parseWhileStatement() noexcept;
+  const std::unique_ptr<WhileStatementAstNode>
+  ParseWhileStatement() noexcept;
 
-  const std::optional<std::shared_ptr<BreakStatementAstNode>>
-  parseBreakStatement() noexcept;
+  const std::unique_ptr<BreakStatementAstNode>
+  ParseBreakStatement() noexcept;
 
-  const std::optional<std::shared_ptr<ReturnStatementAstNode>>
-  parseReturnStatement() noexcept;
+  const std::unique_ptr<ReturnStatementAstNode>
+  ParseReturnStatement() noexcept;
 
-  const std::optional<std::shared_ptr<AssignStatementAstNode>>
-  parseAssignStatement() noexcept;
+  const std::unique_ptr<AssignStatementAstNode>
+  ParseAssignStatement() noexcept;
 
-  const std::optional<std::shared_ptr<BlockStatementAstNode>>
-  parseBlockStatement() noexcept;
+  const std::unique_ptr<BlockStatementAstNode>
+  ParseBlockStatement() noexcept;
 
-  const std::optional<std::shared_ptr<ExpressionStatementAstNode>>
-  parseExpressionStatement() noexcept;
+  const std::unique_ptr<ExpressionStatementAstNode>
+  ParseExpressionStatement() noexcept;
 
-  const std::optional<std::shared_ptr<ExpressionAstNode>>
-  parseExpression() noexcept;
+  const std::unique_ptr<ExpressionAstNode>
+  ParseExpression() noexcept;
 
-  const std::optional<std::shared_ptr<LiteralExpressionAstNode>>
-  parseLiteralExpression() noexcept;
+  const std::unique_ptr<LiteralExpressionAstNode>
+  ParseLiteralExpression() noexcept;
 
-  const std::optional<std::shared_ptr<IdentifierExpressionAstNode>>
-  parseIdentiferExpression() noexcept;
+  const std::unique_ptr<IdentifierExpressionAstNode>
+  ParseIdentiferExpression() noexcept;
 
-  const std::optional<std::shared_ptr<FunctionDeclarationExpressionAstNode>>
-  parseFunctionDeclarationExpression() noexcept;
+  const std::unique_ptr<FunctionDeclarationExpressionAstNode>
+  ParseFunctionDeclarationExpression() noexcept;
 
-  const std::optional<std::shared_ptr<ObjectDeclarationExpressionAstNode>>
-  parseObjectDeclarationExpression() noexcept;
+  const std::unique_ptr<ObjectDeclarationExpressionAstNode>
+  ParseObjectDeclarationExpression() noexcept;
 
-  const std::optional<std::shared_ptr<ExpressionAstNode>>
-  parseIdentifierOrFunctionInvocationExpression() noexcept;
+  const std::unique_ptr<ExpressionAstNode>
+  ParseIdentifierOrFunctionInvocationExpression() noexcept;
 
-  const std::optional<std::shared_ptr<StatementAstNode>>
-  parseAssignOrExpressionStatement() noexcept;
+  const std::unique_ptr<StatementAstNode>
+  ParseAssignOrExpressionStatement() noexcept;
 
-  const std::optional<std::shared_ptr<FunctionInvocationExpressionAstNode>>
-  parseFunctionInvocationExpression() noexcept;
+  const std::unique_ptr<FunctionInvocationExpressionAstNode>
+  ParseFunctionInvocationExpression() noexcept;
 
-  const std::optional<std::shared_ptr<BuiltInFunctionInvocationExpressionAstNode>>
-  parseBuiltInFunctionInvocationExpression() noexcept;
+  const std::unique_ptr<BuiltInFunctionInvocationExpressionAstNode>
+  ParseBuiltInFunctionInvocationExpression() noexcept;
 
-  void reportError(
-    const std::shared_ptr<Token>& token,
+private:
+  void ReportError(
+    const Token& token,
     const std::string & errorMessage) noexcept;
 
-  void skipWhiteSpace() noexcept;
+  void SkipWhiteSpace() noexcept;
 
-  std::shared_ptr<Token> expect(
+  const std::unique_ptr<Token> Expect(
     TokenType type,
     bool & error,
-    const std::string & errorMessage) noexcept;
+    const std::string& errorMessage) noexcept;
+};
+
 };
 
 #endif

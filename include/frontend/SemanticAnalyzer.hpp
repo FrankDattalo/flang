@@ -1,24 +1,19 @@
 #ifndef SEMANTIC_ANALYZER_HPP
 #define SEMANTIC_ANALYZER_HPP
 
-#include "lib.hpp"
-#include "Ast.hpp"
-#include "Error.hpp"
-#include "Readable.hpp"
-#include "AstWalker.hpp"
+#include "utils/lib.hpp"
+#include "utils/error.hpp"
+#include "frontend/Ast.hpp"
+#include "frontend/AstWalker.hpp"
 
 class SemanticAnalyzer {
-public:
+private:
   std::ostream & out;
-  const std::shared_ptr<const Readable> reader;
 
-  explicit SemanticAnalyzer(std::ostream & out, std::shared_ptr<const Readable> reader) noexcept
-  : out{out}, reader{std::move(reader)}
-  {}
+public:
+  explicit SemanticAnalyzer(std::ostream & out) noexcept;
 
-  virtual ~SemanticAnalyzer() = default;
-
-  bool isValid(const std::shared_ptr<ScriptAstNode>& script) noexcept;
+  bool IsValid(const ScriptAstNode& script) noexcept;
 };
 
 #endif // SEMANTIC_ANALYZER_HPP

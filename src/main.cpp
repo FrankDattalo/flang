@@ -17,16 +17,6 @@ void usage(const std::string & msg) {
   exit(1);
 }
 
-struct MyHandler {
-
-  void onEnterIfStatementAstNode(frontend::IfStatementAstNode*) {}
-  void onExitIfStatementAstNode(frontend::IfStatementAstNode*) {}
-
-
-  void onEnterExpressionStatementAstNode(frontend::ExpressionStatementAstNode*) {}
-  void onExitExpressionStatementAstNode(frontend::ExpressionStatementAstNode*) {}
-};
-
 int main(int, char**) {
 
   // if (argc != 2) {
@@ -46,11 +36,6 @@ int main(int, char**) {
   // auto interpreter = std::make_shared<interpreter::Interpreter>(std::cout, std::cin);
   // interpreter->Run(contents.value());
 
-  MyHandler mh;
-
-  frontend::AstWalker<MyHandler*> walker{&mh};
-
-  walker.VisitScriptAstNode(nullptr);
 
   return 0;
 }

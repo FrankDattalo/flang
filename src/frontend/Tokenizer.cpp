@@ -1,4 +1,6 @@
-#include "Tokenizer.hpp"
+#include "frontend/Tokenizer.hpp"
+
+namespace frontend {
 
 class TokenizerRule {
 public:
@@ -371,3 +373,5 @@ std::shared_ptr<Token> Tokenizer::nextToken() noexcept {
 std::shared_ptr<Token> Tokenizer::currentToken() const noexcept {
   return this->token;
 }
+
+};

@@ -7,14 +7,20 @@
 
 namespace frontend {
 
+class AstWalker;
+
 class StatementAstNode {
 public:
   virtual ~StatementAstNode() = default;
+
+  virtual void Accept(const AstWalker& walker) const = 0;
 };
 
 class ExpressionAstNode {
 public:
   virtual ~ExpressionAstNode() = default;
+
+  virtual void Accept(const AstWalker& walker) const = 0;
 };
 
 class ScriptAstNode {

@@ -18,7 +18,7 @@ private:
   NOT_COPYABLE(Token);
 
 public:
-  explicit Token(const std::string_view, TokenType, std::size_t, std::size_t, std::size_t) noexcept;
+  explicit Token(const std::string_view value, TokenType tokenType, std::size_t sourceIndex, std::size_t sourceLine, std::size_t sourceColumn) noexcept;
 
   HAS_GETTER(std::string_view, Value);
 

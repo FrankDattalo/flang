@@ -10,8 +10,7 @@ namespace frontend {
 class TokenBuffer {
 private:
   Tokenizer tokenizer;
-  std::vector<std::unique_ptr<Token>> tokenList;
-  std::size_t firstUsedIndex;
+  std::list<std::unique_ptr<Token>> tokenList;
 
   NOT_COPYABLE(TokenBuffer);
 
@@ -21,6 +20,8 @@ public:
   const Token& TokenAt(std::size_t) noexcept;
 
   std::unique_ptr<Token> Advance() noexcept;
+
+  void ReportErrorAtToken(std::ostream & out, std::string_view phase, const Token& token, const std::string & message);
 };
 
 };

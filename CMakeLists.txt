@@ -14,6 +14,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-fexceptions -fsanitize=address -fasynchronous-unwind
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 set(SOURCES
+  ${PROJECT_SOURCE_DIR}/src/frontend/AstWalker.cpp
 )
 
 add_executable(flang
