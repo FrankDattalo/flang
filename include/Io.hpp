@@ -16,6 +16,6 @@ std::optional<std::string> readFileToString(const std::string & path) {
   return std::string{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 }
 
-};
+}
 
 #endif

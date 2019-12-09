@@ -29,6 +29,6 @@ public:
   void Run(const std::string & data);
 };
 
-};
+}
 
 #endif

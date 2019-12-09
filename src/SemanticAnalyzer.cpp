@@ -240,6 +240,7 @@ public:
       case TokenType::IntegerLiteral: {
         try {
           std::stoll(node->token->value);
+          return;
         } catch (...) {
           this->reportError(node->token, "Invalid value for integer literal.");
         }
@@ -247,6 +248,7 @@ public:
       case TokenType::FloatLiteral: {
         try {
           std::stod(node->token->value);
+          return;
         } catch (...) {
           this->reportError(node->token, "Invalid value for float literal.");
         }

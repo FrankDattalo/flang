@@ -351,7 +351,7 @@ public:
   }
 
   void onExitDeclareStatementAstNode(DeclareStatementAstNode* node) noexcept override {
-    std::size_t index;
+    std::size_t index = 0;
     bool find = this->ec->GetDeclarationIndex(node->identifier->value, index, true);
     Error::assertWithPanic(find, "Could not find local declaration for declare statement");
     this->ec->FullyBind(index);
@@ -359,7 +359,7 @@ public:
   }
 
   void onExitAssignStatementAstNode(AssignStatementAstNode* node) noexcept override {
-    std::size_t index;
+    std::size_t index = 0;
     bool find = this->ec->GetDeclarationIndex(node->identifier->value, index, false);
     Error::assertWithPanic(find, "Could not find local declaration for assign statement");
     this->emit(bytecode::ByteCodeInstruction::SetLocal, index);
@@ -508,4 +508,4 @@ std::shared_ptr<bytecode::CompiledFile> compiler::AstCompiler::compile(std::shar
   return astWalker.ConstructCompiledFile();
 }
 
-};
+}
