@@ -963,7 +963,7 @@ void runtime::VirtualMachine::ObjectSet() {
     return;
   }
 
-  first.objectValue->properties.insert(std::make_pair(*second.stringValue, third));
+  first.objectValue->properties[*second.stringValue] = third;
   this->pushUndefined();
   this->advance();
 }

@@ -53,3 +53,22 @@ var yy3 = y3();
 _ = println(yy3);
 _ = yy3();
 _ = println(_());
+
+var z = function() {
+  var x = 1;
+  return function(y) {
+    return add(y, x);
+  };
+};
+
+var zz = z();
+var qq = zz(1);
+println(qq);
+
+
+var MyObject = {
+  age: "test"
+};
+
+println(set(MyObject, "age", "noodle"));
+println(get(MyObject, "age"));
