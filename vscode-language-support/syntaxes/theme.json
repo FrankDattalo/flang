@@ -1,12 +1,12 @@
 {
   "scopeName": "source.flang",
   "patterns": [
-    { "include": "#comment" }
-    ,{ "include": "#literal" }
-    ,{ "include": "#keywordControl" }
-    ,{ "include": "#keywordNonControl" }
-    ,{ "include": "#builtInFunction" }
-    ,{ "include": "#identifier" }
+    { "include": "#comment" },
+    { "include": "#literal" },
+    { "include": "#keywordControl" },
+    { "include": "#keywordNonControl" },
+    { "include": "#builtInFunction" },
+    { "include": "#identifier" }
   ],
   "repository": {
     "comment": {
